@@ -1,0 +1,31 @@
+package ru.yandex.practicum.filmorate.model;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import lombok.Value;
+import ru.yandex.practicum.filmorate.annotation.NoSpaces;
+
+import java.time.LocalDate;
+
+@Value
+public class User {
+    Long id;
+
+    @Email
+    String email;
+
+    @NotBlank
+    @NotNull
+    @NoSpaces(message = "Login не может содержать пробелы")
+    String login;
+
+    // не требуется ли заодно и пароль, раз есть логин?
+
+    String name;
+
+    @NotNull
+    @PastOrPresent
+    LocalDate birthday;
+}
