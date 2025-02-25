@@ -47,7 +47,19 @@ public class FilmController {
         return film;
     }
 
-    // и здесь, передаётся ли с выставленным id объект?
+    @PutMapping
+    public Film update(@Valid @RequestBody Film film) {
+        if (filmsMap.containsKey(film.getId())) {
+            filmsMap.replace(film.getId(), film);
+            log.info("Был обновлён фильм с id: {}", film.getId());
+            return film;
+            // return filmsMap.get(film.getId()); можно и так, но более ресурсоёмко, а результат тот же
+        } else {
+            log.info("Попытка обновить несуществующий фильм с id: {}", film.getId());
+            throw new NotFoundException();
+        }
+    }
+
     // для обновления объекта нужно, чтобы передавался объект со всеми полями, проходящими валидацию?
     // не требуется возможность обновить одно только поле?
     @PutMapping("/{id}")

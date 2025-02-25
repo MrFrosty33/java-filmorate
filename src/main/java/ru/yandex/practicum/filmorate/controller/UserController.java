@@ -44,10 +44,23 @@ public class UserController {
         return user;
     }
 
+    @PutMapping
+    public User update(@Valid @RequestBody User user) {
+        if (usersMap.containsKey(user.getId())) {
+            usersMap.replace(user.getId(), user);
+            log.info("Был обновлён пользователь с id: {}", user.getId());
+            return user;
+            // return usersMap.get(user.getId()); можно и так, но более ресурсоёмко, а результат тот же
+        } else {
+            log.info("Попытка обновить несуществующего пользователя с id: {}", user.getId());
+            throw new NotFoundException();
+        }
+    }
+    
     @PutMapping("/{id}")
-    public User update(@PathVariable Long id, @Valid @RequestBody User rawuser) {
+    public User update(@PathVariable Long id, @Valid @RequestBody User rawUser) {
         if (usersMap.containsKey(id)) {
-            User user = rawuser.toBuilder().id(id).build();
+            User user = rawUser.toBuilder().id(id).build();
             usersMap.replace(id, user);
             log.info("Был обновлён пользователь с id: {}", id);
             return user;
