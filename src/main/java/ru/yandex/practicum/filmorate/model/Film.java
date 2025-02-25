@@ -1,12 +1,13 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.Max;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
 import ru.yandex.practicum.filmorate.annotation.MinLocalDate;
+import ru.yandex.practicum.filmorate.annotation.PositiveDuration;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -18,19 +19,19 @@ public class Film {
     Long id;
 
     @NotBlank
-    @NotNull
     String name;
 
     @NotBlank
-    @NotNull
-    @Max(value = 200)
+    @Size(max = 200)
     String description;
 
     @NotNull
     @MinLocalDate
+    //@PastOrPresent может ли быть дата релиза в будущем?
+    @JsonFormat(pattern = "yyyy-MM-dd")
     LocalDate releaseDate;
 
     @NotNull
-    @Positive
+    @PositiveDuration
     Duration duration;
 }

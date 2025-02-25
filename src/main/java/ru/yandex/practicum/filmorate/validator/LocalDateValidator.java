@@ -14,14 +14,14 @@ public class LocalDateValidator implements ConstraintValidator<MinLocalDate, Loc
 
     @Override
     public void initialize(MinLocalDate constraintAnnotation) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         this.minDate = LocalDate.parse(constraintAnnotation.value(), formatter);
     }
 
     @Override
     public boolean isValid(LocalDate value, ConstraintValidatorContext constraintValidatorContext) {
         boolean result = !value.isBefore(minDate);
-        if (!result) log.info("Не прошёл валидацию");
+        if (!result) log.info("LocalDateValidator не прошёл валидацию");
         return result;
     }
 }

@@ -11,7 +11,7 @@ public class NoSpacesValidator implements ConstraintValidator<NoSpaces, String> 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext constraintValidatorContext) {
         boolean result = (value != null && !value.contains(" "));
-        if (!result) log.info("Не прошёл валидацию.");
+        if (!result) log.info("NoSpacesValidator не прошёл валидацию");
         return result;
     }
 }
