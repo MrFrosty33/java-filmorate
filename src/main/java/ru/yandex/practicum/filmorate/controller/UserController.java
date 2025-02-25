@@ -56,7 +56,7 @@ public class UserController {
             throw new NotFoundException();
         }
     }
-    
+
     @PutMapping("/{id}")
     public User update(@PathVariable Long id, @Valid @RequestBody User rawUser) {
         if (usersMap.containsKey(id)) {
