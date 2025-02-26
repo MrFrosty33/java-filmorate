@@ -14,7 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    Map<Long, User> usersMap = new HashMap<>();
+    private Map<Long, User> usersMap = new HashMap<>();
 
     @GetMapping("/{id}")
     public User get(@PathVariable Long id) {
@@ -37,8 +37,11 @@ public class UserController {
     }
 
     @PostMapping
-    public User add(@Valid @RequestBody User userRaw) {
-        User user = userRaw.toBuilder().id(nextId()).build();
+    public User add(@Valid @RequestBody User user) {
+        user.setId(getNextId());
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         usersMap.put(user.getId(), user);
         log.info("Был добавлен пользователь с id: {}", user.getId());
         return user;
@@ -50,7 +53,6 @@ public class UserController {
             usersMap.replace(user.getId(), user);
             log.info("Был обновлён пользователь с id: {}", user.getId());
             return user;
-            // return usersMap.get(user.getId()); можно и так, но более ресурсоёмко, а результат тот же
         } else {
             log.info("Попытка обновить несуществующего пользователя с id: {}", user.getId());
             throw new NotFoundException();
@@ -58,13 +60,12 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public User update(@PathVariable Long id, @Valid @RequestBody User rawUser) {
+    public User update(@PathVariable Long id, @Valid @RequestBody User user) {
         if (usersMap.containsKey(id)) {
-            User user = rawUser.toBuilder().id(id).build();
+            user.setId(id);
             usersMap.replace(id, user);
             log.info("Был обновлён пользователь с id: {}", id);
             return user;
-            // return usersMap.get(user.getId()); можно и так, но более ресурсоёмко, а результат тот же
         } else {
             log.info("Попытка обновить несуществующего пользователя с id: {}", id);
             throw new NotFoundException();
@@ -93,7 +94,7 @@ public class UserController {
         }
     }
 
-    private Long nextId() {
+    private Long getNextId() {
         Long nextId = usersMap.keySet().stream()
                 .mapToLong(id -> id)
                 .max()

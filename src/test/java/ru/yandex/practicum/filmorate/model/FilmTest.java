@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.time.LocalDate;
 
 public class FilmTest {
@@ -17,7 +16,7 @@ public class FilmTest {
             .name("Inception")
             .description("A mind-bending thriller.")
             .releaseDate(LocalDate.of(2010, 7, 16))
-            .duration(Duration.ofMinutes(148))
+            .duration(148)
             .build();
 
     @BeforeEach
@@ -70,7 +69,7 @@ public class FilmTest {
 
     @Test
     public void testDurationIsNegative() {
-        Film film = validFilm.toBuilder().duration(Duration.ofMinutes(-148)).build();
+        Film film = validFilm.toBuilder().duration(-148).build();
 
         var violations = validator.validate(film);
         Assertions.assertFalse(violations.isEmpty());

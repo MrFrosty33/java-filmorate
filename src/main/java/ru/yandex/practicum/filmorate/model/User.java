@@ -6,30 +6,27 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 import ru.yandex.practicum.filmorate.annotation.NoSpaces;
 
 import java.time.LocalDate;
 
 @Builder(toBuilder = true)
-@Value
+@Data
 public class User {
-    Long id;
+    private Long id;
 
     @Email
-    String email;
+    private String email;
 
     @NotBlank
     @NoSpaces(message = "Login не может содержать пробелы")
-    String login;
+    private String login;
 
-    // не требуется ли заодно и пароль, раз есть логин?
-
-
-    String name;
+    private String name;
 
     @NotNull
     @PastOrPresent
     @JsonFormat(pattern = "yyyy-MM-dd")
-    LocalDate birthday;
+    private LocalDate birthday;
 }
