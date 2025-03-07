@@ -10,6 +10,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.annotation.NoSpaces;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Builder(toBuilder = true)
 @Data
@@ -29,4 +30,6 @@ public class User {
     @PastOrPresent
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
+
+    private Set<Long> friends;
 }
