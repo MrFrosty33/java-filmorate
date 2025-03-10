@@ -30,9 +30,25 @@ public class UserController {
         return userService.getAll();
     }
 
+    //TODO протестировать новые методы на корректность работы
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public Collection<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        return userService.getCommonFriends(id, otherId);
+    }
+
+    @GetMapping("/{id}/friends/")
+    public Collection<User> getAllFriends(@PathVariable Long id) {
+        return userService.getAllFriends(id);
+    }
+
     @PostMapping
     public User add(@Valid @RequestBody User user) {
         return userService.add(user);
+    }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    public User addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        return userService.addFriend(id, friendId);
     }
 
     @PutMapping
@@ -48,6 +64,11 @@ public class UserController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         userService.delete(id);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.deleteFriend(id, friendId);
     }
 
     @DeleteMapping

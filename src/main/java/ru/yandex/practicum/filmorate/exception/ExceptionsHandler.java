@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.model.ErrorResponse;
 
+// не уверен насчёт названия класса. Пересекается с аннотацией от спринг, но если переименовать
+// может стать непонятно, почему он в пакете с Exceptions находится.
 @RestControllerAdvice(basePackages = "ru.yandex.practicum.filmorate")
 public class ExceptionsHandler {
 
@@ -20,6 +22,12 @@ public class ExceptionsHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(MethodArgumentNotValidException e) {
         return new ErrorResponse("Валидация не прошла: " + e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleConflict(ConflictException e) {
+        return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
