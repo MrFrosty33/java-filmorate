@@ -1,16 +1,20 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class InMemoryFilmStorage implements FilmStorage {
 
     /*
@@ -21,7 +25,16 @@ public class InMemoryFilmStorage implements FilmStorage {
         ибо код из контроллера буквально дублируется в сервисе. FilmService может реализовывать интерфейс FilmStorage
         и хранить в себе мапу.
      */
-    private final Map<Long, Film> filmsMap = new HashMap<>();
+
+    /*
+        На данный момент во многих методах использую для валидации внутренние методы get(), которые
+        в случае чего выбрасывают ошибку. Но текст ошибок может не идеально подходить ситуации.
+        Если в каждом методе делать проверки, код станет более громоздкий. Стоит ли сделать отдельный метод
+        для валидации? Из-за этого также пришлось добавить UserStorage, чтобы иметь возможность проверять,
+        существует ли пользователь, который пытается поставить лайк.
+     */
+    private final Map<Long, Film> filmsMap;
+    private final UserStorage userStorage;
 
     @Override
     public Film get(Long id) {
@@ -45,20 +58,64 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getPopular(int count) {
-        return null;
+        int from;
+        int bound;
+
+        if (filmsMap.size() > count) {
+            from = filmsMap.size() - count;
+            bound = from + count;
+        } else {
+            from = 1;
+            bound = from + filmsMap.size();
+        }
+
+        log.info("Получен список из {} наиболее популярных фильмов", count);
+        return filmsMap.entrySet().stream()
+                .filter(entry -> (entry.getKey() >= from && entry.getKey() < bound))
+                .sorted((entry1, entry2) ->
+                        Integer.compare(entry2.getValue().getLikes().size(), entry1.getValue().getLikes().size()))
+                .map(Map.Entry::getValue)
+                .toList();
     }
 
     @Override
     public Film add(Film film) {
+        // может ли только что добавленный фильм иметь лайки?
         film.setId(getNextId());
         filmsMap.put(film.getId(), film);
+        if (film.getLikes() == null || film.getLikes().isEmpty()) {
+            film.setLikes(new HashSet<>());
+        } else {
+            Set<Long> invalidLikes = new HashSet<>();
+            Set<Long> validLikes = new HashSet<>();
+            for (Long likeId : film.getLikes()) {
+                if (!userStorage.getAll().contains(userStorage.get(likeId))) {
+                    invalidLikes.add(likeId);
+                } else {
+                    validLikes.add(likeId);
+                }
+            }
+            if (!invalidLikes.isEmpty()) {
+                log.info("Попытка добавить фильм с некорректным списком лайков");
+                throw new NotFoundException("Пользователи с id: " + invalidLikes
+                        + " не существуют, следовательно не могут поставить лайк");
+            }
+            for (Long likeId : validLikes) {
+                film.getLikes().add(likeId);
+            }
+        }
         log.info("Был добавлен фильм с id: {}", film.getId());
         return film;
     }
 
     @Override
-    public void addLike(Long id, Long userId) {
+    public Set<Long> addLike(Long id, Long userId) {
+        Film film = get(id);
+        User user = userStorage.get(userId);
 
+        film.getLikes().add(userId);
+        log.info("Фильму с id: {} был поставлен лайк от пользователя с id: {}", id, userId);
+        return film.getLikes();
     }
 
     @Override
@@ -94,6 +151,22 @@ public class InMemoryFilmStorage implements FilmStorage {
         } else {
             log.info("Попытка удалить несуществующий фильм с id: {}", id);
             throw new NotFoundException("Не существует фильм с id: " + id);
+        }
+    }
+
+    @Override
+    public void deleteLike(Long id, Long userId) {
+        Film film = get(id);
+        User user = userStorage.get(userId);
+
+        if (film.getLikes().contains(userId)) {
+            film.getLikes().remove(userId);
+            log.info("У фильма с id: {} был удалён лайк от пользователя с id: {}",
+                    id, userId);
+        } else {
+            log.info("Попытка удалить у фильма с id: {} несуществующий лайк от пользователя с id: {}",
+                    id, userId);
+            throw new NotFoundException("У фильма с id: " + id + " нет лайка от пользователя с id: " + userId);
         }
     }
 

@@ -30,13 +30,12 @@ public class UserController {
         return userService.getAll();
     }
 
-    //TODO протестировать новые методы на корректность работы
     @GetMapping("/{id}/friends/common/{otherId}")
     public Collection<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
         return userService.getCommonFriends(id, otherId);
     }
 
-    @GetMapping("/{id}/friends/")
+    @GetMapping("/{id}/friends")
     public Collection<User> getAllFriends(@PathVariable Long id) {
         return userService.getAllFriends(id);
     }

@@ -34,5 +34,6 @@ public class Film {
     @Min(1)
     private long duration;
 
+    // хранит в себе ID пользователей поставихших лайк фильму
     private Set<Long> likes;
 }

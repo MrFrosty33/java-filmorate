@@ -1,15 +1,16 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    private final UserStorage userStorage = new InMemoryUserStorage();
+    private final UserStorage userStorage;
 
     public User get(Long id) {
         return userStorage.get(id);

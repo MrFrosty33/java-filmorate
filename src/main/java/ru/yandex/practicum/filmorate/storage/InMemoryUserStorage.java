@@ -1,21 +1,20 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class InMemoryUserStorage implements UserStorage {
 
-    private final Map<Long, User> usersMap = new HashMap<>();
+    private final Map<Long, User> usersMap;
 
     @Override
     public User get(Long id) {
@@ -55,6 +54,10 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public Collection<User> getAllFriends(Long id) {
         User user = get(id);
+        if (user.getFriends().isEmpty()) {
+            log.info("Попытка получить пустой список друзей у пользователя с id: {}", id);
+            throw new NotFoundException("Список друзей пользователя с id: " + id + " пуст");
+        }
         Collection<User> friends = new ArrayList<>();
 
         for (Long friendId : user.getFriends()) {
@@ -66,10 +69,36 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User add(User user) {
+        // может ли только что созданный пользователей иметь друзей?
         user.setId(getNextId());
+
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
+
+        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+            user.setFriends(new HashSet<>());
+        } else {
+            Set<Long> invalidFriends = new HashSet<>();
+            Set<Long> validFriends = new HashSet<>();
+            for (Long friendId : user.getFriends()) {
+                if (!usersMap.containsKey(friendId)) {
+                    log.info("Попытка добавить пользователя с другом id: {}, который не существует", friendId);
+                    invalidFriends.add(friendId);
+                } else {
+                    validFriends.add(friendId);
+                }
+            }
+            if (!invalidFriends.isEmpty()) {
+                log.info("Попытка добавить пользователя с некорректным списком друзей");
+                throw new NotFoundException("Друзья с id: " + invalidFriends + " не существуют");
+            }
+            for (Long friendId : validFriends) {
+                log.info("У пользователя с id: {} появился новый друг с id: {}", friendId, user.getId());
+                usersMap.get(friendId).getFriends().add(user.getId());
+            }
+        }
+
         usersMap.put(user.getId(), user);
         log.info("Был добавлен пользователь с id: {}", user.getId());
         return user;
@@ -79,12 +108,18 @@ public class InMemoryUserStorage implements UserStorage {
     public User addFriend(Long id, Long friendId) {
         User user = get(id);
         User friend = get(friendId);
+        if (id.equals(friendId)) {
+            log.info("Попытка добавить самого себя в друзья");
+            throw new ConflictException("Невозможно добавить самого себя в друзья");
+        }
         if (user.getFriends().contains(friend.getId())) {
             log.info("Попытка добавить в друзья пользователя, который уже находится в друзьях");
             throw new ConflictException("Пользователь с id: " + user.getId() + " уже находится в друзьях");
         }
         user.getFriends().add(friend.getId());
         log.info("У пользователя с id: {} появился новый друг с id: {}", user.getId(), friend.getId());
+        friend.getFriends().add(user.getId());
+        log.info("У пользователя с id: {} появился новый друг с id: {}", friend.getId(), user.getId());
         return user;
     }
 
