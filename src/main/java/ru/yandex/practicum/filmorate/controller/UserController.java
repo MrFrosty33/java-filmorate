@@ -74,6 +74,4 @@ public class UserController {
     public void deleteAll() {
         userService.deleteAll();
     }
-
-    //TODO новые методы
 }
