@@ -103,6 +103,10 @@ public class FilmService {
         validateFilmExists(Optional.of(film.getId()),
                 new NotFoundException("Фильм с id: " + film.getId() + " не существует"),
                 "Попытка обновить несуществующий фильм с id: " + film.getId());
+
+        if (film.getLikes() == null) {
+            film.setLikes(new HashSet<>());
+        }
         validateLikes(get(film.getId()), film);
 
         log.info("Был обновлён фильм с id: {}", film.getId());

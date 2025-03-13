@@ -53,18 +53,23 @@ public class UserService {
         return friends;
     }
 
+    // если список друзей пустой, стоит и возвраать ничего, или же выдавать ошибку?
+    // потому что если возвращать ошибку, то Postman тест "add-friends-likes/friends/Friend get" не проходит
     public Collection<User> getAllFriends(Long id) {
         User user = get(id);
+        /*
         if (user.getFriends().isEmpty()) {
             log.info("Попытка получить пустой список друзей у пользователя с id: {}", id);
             throw new NotFoundException("Список друзей пользователя с id: " + id + " пуст");
         }
+         */
         Collection<User> friends = new ArrayList<>();
 
         for (Long friendId : user.getFriends()) {
             friends.add(userStorage.get(friendId));
         }
 
+        log.info("Получен список друзей пользователя с id: {}", id);
         return friends;
     }
 
@@ -127,6 +132,9 @@ public class UserService {
                 new NotFoundException("Не существует пользователь с id: " + user.getId()),
                 "Попытка обновить несуществующего пользователя с id: " + user.getId());
 
+        if (user.getFriends() == null) {
+            user.setFriends(new HashSet<>());
+        }
         updateFriends(get(user.getId()), user);
         userStorage.update(user.getId(), user);
         log.info("Был обновлён пользователь с id: {}", user.getId());
