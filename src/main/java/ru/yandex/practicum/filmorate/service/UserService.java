@@ -20,6 +20,8 @@ public class UserService {
         validateUserExists(Optional.of(id),
                 new NotFoundException("Не существует пользователь с id: " + id),
                 "Попытка получить несуществующего пользователя с id: " + id);
+
+        log.info("Получен пользователь с id: {}", id);
         return userStorage.get(id);
     }
 
@@ -27,6 +29,8 @@ public class UserService {
         validateUserExists(Optional.empty(),
                 new NotFoundException("Список пользователей пуст"),
                 "Попытка получить список пользователей, который пуст");
+
+        log.info("Получен список всех пользователей");
         return userStorage.getAll();
     }
 
@@ -50,6 +54,8 @@ public class UserService {
             }
         }
 
+        log.info("Получен список совместных друзей между пользоваталем с id: {} и другим пользователем с id: {}",
+                id, otherId);
         return friends;
     }
 
@@ -170,13 +176,18 @@ public class UserService {
         log.info("Был удалён пользователь с id: {}", id);
     }
 
+
+    // тоже не проходит тест "add-friends-like/friends/Not friend remove"
+    // ожидается, что при попытке удалить несуществующего друга, метод просто ничего не делает и возвращает код 200?
     public void deleteFriend(Long id, Long friendId) {
         User user = get(id);
         User friend = get(friendId);
+        /*
         if (!user.getFriends().contains(friend.getId())) {
             log.info("Попытка убрать из друзей несуществующего друга с id: {}", friend.getId());
             throw new ConflictException("Попытка убрать из друзей несуществующего друга с id: " + friend.getId());
         }
+         */
         // Удаление из друзей работает же в обе стороны?
         // А перестал быть другом Б, следовательно Б не является больше другом А?
         user.getFriends().remove(friend.getId());

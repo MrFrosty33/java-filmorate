@@ -27,6 +27,8 @@ public class FilmService {
         validateFilmExists(Optional.of(id),
                 new NotFoundException("Не существует фильма с id: " + id),
                 "Попытка получить несуществующий фильм с id: " + id);
+
+        log.info("Получен фильм с id: {}", id);
         return filmStorage.get(id);
     }
 
@@ -34,6 +36,8 @@ public class FilmService {
         validateFilmExists(Optional.empty(),
                 new NotFoundException("Список фильмов пуст"),
                 "Попытка получить список фильмов, который пуст");
+
+        log.info("Получен список всех фильмов");
         return filmStorage.getAll();
     }
 
