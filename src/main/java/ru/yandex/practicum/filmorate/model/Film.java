@@ -10,6 +10,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.annotation.MinLocalDate;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Builder(toBuilder = true)
 @Data
@@ -32,4 +33,11 @@ public class Film {
     @NotNull
     @Min(1)
     private long duration;
+
+    // хранит в себе ID пользователей поставихших лайк фильму
+    private Set<Long> likes;
+
+    public int getRate() {
+        return likes.size();
+    }
 }
