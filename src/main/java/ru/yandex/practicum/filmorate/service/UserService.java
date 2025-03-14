@@ -35,40 +35,21 @@ public class UserService {
     }
 
     public Collection<User> getCommonFriends(Long id, Long otherId) {
-        User user = get(id);
-        User otherUser = get(otherId);
-        Collection<User> friends = new ArrayList<>();
-
-        /*
-        Стоит ли проверять, есть ли вообще друзья у того или иного пользователя
-        и в случае отсутствия выбрасывать ошибку?
-        Или пускай в этом случае пройдёт цикл и вернёт пустой список?
-        if(user.getFriends().isEmpty() || otherUser.getFriends().isEmpty()){
-            // ...
-        }
-         */
-
-        for (Long friendId : user.getFriends()) {
-            if (otherUser.getFriends().contains(friendId)) {
-                friends.add(userStorage.get(friendId));
-            }
-        }
+        final User user = userStorage.get(id);
+        final User other = userStorage.get(otherId);
+        final Set<Long> friends = user.getFriends();
+        final Set<Long> otherFriends = other.getFriends();
 
         log.info("Получен список совместных друзей между пользоваталем с id: {} и другим пользователем с id: {}",
                 id, otherId);
-        return friends;
+        return friends.stream()
+                .filter(otherFriends::contains)
+                .map(userStorage::get)
+                .toList();
     }
 
-    // если список друзей пустой, стоит и возвраать ничего, или же выдавать ошибку?
-    // потому что если возвращать ошибку, то Postman тест "add-friends-likes/friends/Friend get" не проходит
     public Collection<User> getAllFriends(Long id) {
         User user = get(id);
-        /*
-        if (user.getFriends().isEmpty()) {
-            log.info("Попытка получить пустой список друзей у пользователя с id: {}", id);
-            throw new NotFoundException("Список друзей пользователя с id: " + id + " пуст");
-        }
-         */
         Collection<User> friends = new ArrayList<>();
 
         for (Long friendId : user.getFriends()) {
@@ -80,34 +61,19 @@ public class UserService {
     }
 
     public User add(User user) {
-        // может ли только что созданный пользователей иметь друзей?
         user.setId(getNextId());
 
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
 
-        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+        if (user.getFriends() == null) {
             user.setFriends(new HashSet<>());
-        } else {
-            Set<Long> invalidFriends = new HashSet<>();
-            Set<Long> validFriends = new HashSet<>();
-            for (Long friendId : user.getFriends()) {
-                if (!userStorage.getMap().containsKey(friendId)) {
-                    log.info("Попытка добавить пользователя с другом id: {}, который не существует", friendId);
-                    invalidFriends.add(friendId);
-                } else {
-                    validFriends.add(friendId);
-                }
-            }
-            if (!invalidFriends.isEmpty()) {
-                log.info("Попытка добавить пользователя с некорректным списком друзей");
-                throw new NotFoundException("Друзья с id: " + invalidFriends + " не существуют");
-            }
-            for (Long friendId : validFriends) {
-                log.info("У пользователя с id: {} появился новый друг с id: {}", friendId, user.getId());
-                userStorage.get(friendId).getFriends().add(user.getId());
-            }
+        }
+
+        if (!user.getFriends().isEmpty()) {
+            log.info("Попытка добавить нового пользователя с уже имеющимися друзьями");
+            throw new ConflictException("Новый пользователь не может иметь друзей");
         }
 
         userStorage.add(user);
@@ -176,20 +142,10 @@ public class UserService {
         log.info("Был удалён пользователь с id: {}", id);
     }
 
-
-    // тоже не проходит тест "add-friends-like/friends/Not friend remove"
-    // ожидается, что при попытке удалить несуществующего друга, метод просто ничего не делает и возвращает код 200?
     public void deleteFriend(Long id, Long friendId) {
         User user = get(id);
         User friend = get(friendId);
-        /*
-        if (!user.getFriends().contains(friend.getId())) {
-            log.info("Попытка убрать из друзей несуществующего друга с id: {}", friend.getId());
-            throw new ConflictException("Попытка убрать из друзей несуществующего друга с id: " + friend.getId());
-        }
-         */
-        // Удаление из друзей работает же в обе стороны?
-        // А перестал быть другом Б, следовательно Б не является больше другом А?
+
         user.getFriends().remove(friend.getId());
         friend.getFriends().remove(user.getId());
         log.info("У пользователя с id: {} был удалён друг с id: {}", user.getId(), friend.getId());

@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.BadRequestParamException;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -11,6 +12,7 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -18,10 +20,10 @@ import java.util.*;
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserService userService;
-
-    // требуется только для методов add & deleteLike
-    // если проводить проверки не напрямую, а через userService, то будет не то сообщение об ошибке
     private final UserStorage userStorage;
+
+    public static final Comparator<Film> FILM_COMPARATOR =
+            Comparator.comparingLong(Film::getRate).reversed();
 
     public Film get(Long id) {
         validateFilmExists(Optional.of(id),
@@ -42,54 +44,37 @@ public class FilmService {
     }
 
     public Collection<Film> getPopular(int count) {
-        int from;
-        int bound;
         validateFilmExists(Optional.empty(),
                 new NotFoundException("Список фильмов пуст"),
                 "Попытка получить список фильмов, который пуст");
 
-        Map<Long, Film> films = filmStorage.getMap();
-        if (films.size() > count) {
-            from = films.size() - count;
-            bound = from + count;
-        } else {
-            from = 1;
-            bound = from + films.size();
+        if (count <= 0) {
+            log.info("Попытка получить список популярных фильмов c count = {}", count);
+            throw new BadRequestParamException("count не может быть меньше или равен 0");
+        }
+
+        if (count > filmStorage.getAll().size()) {
+            count = filmStorage.getAll().size();
         }
 
         log.info("Получен список из {} наиболее популярных фильмов", count);
-        return films.entrySet().stream()
-                .filter(entry -> (entry.getKey() >= from && entry.getKey() < bound))
-                .sorted((entry1, entry2) ->
-                        Integer.compare(entry2.getValue().getLikes().size(), entry1.getValue().getLikes().size()))
-                .map(Map.Entry::getValue)
-                .toList();
+        return filmStorage.getAll().stream()
+                .sorted(FILM_COMPARATOR)
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     public Film add(Film film) {
-        // может ли только что добавленный фильм иметь лайки?
         film.setId(getNextId());
-        if (film.getLikes() == null || film.getLikes().isEmpty()) {
+        if (film.getLikes() == null) {
             film.setLikes(new HashSet<>());
-        } else {
-            Set<Long> invalidLikes = new HashSet<>();
-            Set<Long> validLikes = new HashSet<>();
-            for (Long likeId : film.getLikes()) {
-                if (!userStorage.getAll().contains(userStorage.get(likeId))) {
-                    invalidLikes.add(likeId);
-                } else {
-                    validLikes.add(likeId);
-                }
-            }
-            if (!invalidLikes.isEmpty()) {
-                log.info("Попытка добавить фильм с некорректным списком лайков");
-                throw new ConflictException("Пользователи с id: " + invalidLikes
-                        + " не существуют, следовательно не могут поставить лайк");
-            }
-            for (Long likeId : validLikes) {
-                film.getLikes().add(likeId);
-            }
         }
+
+        if (!film.getLikes().isEmpty()) {
+            log.info("Попытка добавить новый фильм с уже поставленными ему лайками");
+            throw new ConflictException("Новый фильм не может содержать лайки");
+        }
+
         filmStorage.add(film.getId(), film);
         log.info("Был добавлен фильм с id: {}", film.getId());
         return film;

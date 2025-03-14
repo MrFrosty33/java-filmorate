@@ -36,4 +36,8 @@ public class Film {
 
     // хранит в себе ID пользователей поставихших лайк фильму
     private Set<Long> likes;
+
+    public int getRate() {
+        return likes.size();
+    }
 }

@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/films")
@@ -25,7 +24,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopular(@RequestParam(required = false, defaultValue = "10") int count) {
+    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
         return filmService.getPopular(count);
     }
 
@@ -40,7 +39,7 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public Set<Long> addLike(@PathVariable Long id, @PathVariable Long userId) {
+    public Collection<Long> addLike(@PathVariable Long id, @PathVariable Long userId) {
         return filmService.addLike(id, userId);
     }
 
