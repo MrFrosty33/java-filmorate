@@ -32,4 +32,9 @@ public class User {
     private LocalDate birthday;
 
     private Set<Long> friends;
+
+    // как это будет реализовано? Если хоть один друг не принял запрос - статус висит всегда "UNCORFIRMED"?
+    // и только, если все друзья приняли запрос, только тогда "CONFIRMED"?
+    //TODO валидация?
+    private FriendshipStatus friendshipStatus;
 }
