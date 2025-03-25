@@ -10,7 +10,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.annotation.NoSpaces;
 
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.Map;
 
 @Builder(toBuilder = true)
 @Data
@@ -31,10 +31,7 @@ public class User {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
 
-    private Set<Long> friends;
-
-    // как это будет реализовано? Если хоть один друг не принял запрос - статус висит всегда "UNCORFIRMED"?
-    // и только, если все друзья приняли запрос, только тогда "CONFIRMED"?
-    //TODO валидация?
-    private FriendshipStatus friendshipStatus;
+    // Хранит в себе ID друга и статус иъ дружбы.
+    // TODO логика
+    private Map<Long, FriendshipStatus> friendStatusMap;
 }
