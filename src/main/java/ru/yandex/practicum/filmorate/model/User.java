@@ -37,6 +37,5 @@ public class User {
     private Set<Long> friends;
 
     // Хранит в себе ID друга и статус их дружбы.
-    // TODO логика
     private Map<Long, FriendshipStatus> friendStatusMap;
 }

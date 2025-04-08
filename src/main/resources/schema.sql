@@ -15,9 +15,7 @@ CREATE TABLE IF NOT EXISTS film (
     name VARCHAR,
     description TEXT,
     release_date DATE,
-    duration INTEGER,
-    rating_id INTEGER,
-    FOREIGN KEY (rating_id) REFERENCES rating(id)
+    duration INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS friendship_status (
@@ -39,6 +37,12 @@ CREATE TABLE IF NOT EXISTS film_genre (
     film_id INTEGER REFERENCES film(id) ON DELETE CASCADE,
     genre_id INTEGER REFERENCES genre(id) ON DELETE CASCADE,
     PRIMARY KEY (film_id, genre_id)
+);
+
+CREATE TABLE IF NOT EXISTS film_rating (
+    film_id INTEGER REFERENCES film(id) ON DELETE CASCADE,
+    rating_id INTEGER REFERENCES rating(id) ON DELETE CASCADE,
+    PRIMARY KEY (film_id, rating_id)
 );
 
 CREATE TABLE IF NOT EXISTS "friend" (

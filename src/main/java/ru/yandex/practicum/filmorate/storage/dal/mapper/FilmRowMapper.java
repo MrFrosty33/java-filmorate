@@ -17,6 +17,7 @@ import java.util.Set;
 public class FilmRowMapper implements RowMapper<Film> {
     private final JdbcTemplate jdbc;
 
+    //TODO протестировать, работает ли вообще
     @Override
     public Film mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         Film film = Film.builder()
@@ -27,26 +28,36 @@ public class FilmRowMapper implements RowMapper<Film> {
                 .duration(resultSet.getLong("duration"))
                 .build();
 
-        return null;
-        //TODO лайки, рейтинг, жанры
+        film.toBuilder()
+                .likes(getLikes(film.getId()))
+                .genres(getGenres(film.getId()))
+                .ratingMpa(getRating(film.getId()))
+                .build();
+        return film;
     }
 
-    //TODO протестировать stm
     private Set<Long> getLikes(long id) {
-        String stm = "SELECT l.user_id FROM film f INNER JOIN like l ON f.id = l.film_id";
-        return new HashSet<>(jdbc.queryForList(stm, long.class));
+        String stm = "SELECT l.user_id " +
+                "FROM film f " +
+                "INNER JOIN \"like\" l ON f.id = l.film_id " +
+                "WHERE l.film_id = " + id;
+        return new HashSet<>(jdbc.queryForList(stm, Long.class));
     }
 
     private Set<Genre> getGenres(long id) {
-        String stm = "SELECT g.name " +
+        String stm = "SELECT g.name AS genre " +
                 "FROM film f " +
-                "INNER JOIN film_genre fg ON fg.film_id = f.id" +
-                "INNER JOIN genre g ON fg.genre_id = g.id";
-        return null;
+                "INNER JOIN film_genre fg ON fg.film_id = f.id " +
+                "INNER JOIN genre g ON fg.genre_id = g.id " +
+                "WHERE fg.film_id = " + id;
+        return new HashSet<>(jdbc.query(stm, (rs, rowNum) -> Genre.valueOf(rs.getString("genre"))));
     }
 
     private RatingMpa getRating(long id) {
-        String stm = "SELECT r.name FROM film f INNER JOIN rating r ON f.rating_id = r.id";
-        return jdbc.queryForObject(stm, RatingMpa.class);
+        String stm = "SELECT r.name AS rating " +
+                "FROM film f " +
+                "INNER JOIN film_rating fr ON f.id = fr.film_id INNER JOIN rating r ON r.id = fr.rating_id " +
+                "WHERE f.id = " + id;
+        return jdbc.queryForObject(stm, (rs, rowNum) -> RatingMpa.valueOf(rs.getString("rating")));
     }
 }

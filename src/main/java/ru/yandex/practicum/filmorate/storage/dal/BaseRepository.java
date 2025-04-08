@@ -10,19 +10,17 @@ import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 public class BaseRepository<T> {
     protected final JdbcTemplate jdbc;
     protected final RowMapper<T> mapper;
 
-    protected Optional<T> findOne(String query, Object... params) {
+    protected T findOne(String query, Object... params) {
         try {
-            T result = jdbc.queryForObject(query, mapper, params);
-            return Optional.ofNullable(result);
+            return jdbc.queryForObject(query, mapper, params);
         } catch (EmptyResultDataAccessException ignored) {
-            return Optional.empty();
+            return null;
         }
     }
 
@@ -30,8 +28,13 @@ public class BaseRepository<T> {
         return jdbc.query(query, mapper, params);
     }
 
-    protected boolean delete(String query, long id) {
+    protected boolean deleteOne(String query, long id) {
         int rowsDeleted = jdbc.update(query, id);
+        return rowsDeleted > 0;
+    }
+
+    protected boolean deleteAll(String query) {
+        int rowsDeleted = jdbc.update(query);
         return rowsDeleted > 0;
     }
 
