@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
 import java.util.*;
 
@@ -14,7 +14,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
 
     public User get(Long id) {
         validateUserExists(Optional.of(id),
@@ -22,7 +22,7 @@ public class UserService {
                 "Попытка получить несуществующего пользователя с id: " + id);
 
         log.info("Получен пользователь с id: {}", id);
-        return userStorage.get(id);
+        return userRepository.get(id);
     }
 
     public Collection<User> getAll() {
@@ -31,12 +31,13 @@ public class UserService {
                 "Попытка получить список пользователей, который пуст");
 
         log.info("Получен список всех пользователей");
-        return userStorage.getAll();
+        return userRepository.getAll();
     }
 
+
     public Collection<User> getCommonFriends(Long id, Long otherId) {
-        final User user = userStorage.get(id);
-        final User other = userStorage.get(otherId);
+        final User user = userRepository.get(id);
+        final User other = userRepository.get(otherId);
         final Set<Long> friends = user.getFriends();
         final Set<Long> otherFriends = other.getFriends();
 
@@ -44,7 +45,7 @@ public class UserService {
                 id, otherId);
         return friends.stream()
                 .filter(otherFriends::contains)
-                .map(userStorage::get)
+                .map(userRepository::get)
                 .toList();
     }
 
@@ -53,7 +54,7 @@ public class UserService {
         Collection<User> friends = new ArrayList<>();
 
         for (Long friendId : user.getFriends()) {
-            friends.add(userStorage.get(friendId));
+            friends.add(userRepository.get(friendId));
         }
 
         log.info("Получен список друзей пользователя с id: {}", id);
@@ -61,8 +62,6 @@ public class UserService {
     }
 
     public User add(User user) {
-        user.setId(getNextId());
-
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
@@ -76,7 +75,7 @@ public class UserService {
             throw new ConflictException("Новый пользователь не может иметь друзей");
         }
 
-        userStorage.add(user);
+        userRepository.add(user);
         log.info("Был добавлен пользователь с id: {}", user.getId());
         return user;
     }
@@ -108,7 +107,7 @@ public class UserService {
             user.setFriends(new HashSet<>());
         }
         updateFriends(get(user.getId()), user);
-        userStorage.update(user.getId(), user);
+        userRepository.update(user.getId(), user);
         log.info("Был обновлён пользователь с id: {}", user.getId());
         return user;
     }
@@ -120,7 +119,7 @@ public class UserService {
 
         user.setId(id);
         updateFriends(get(id), user);
-        userStorage.update(id, user);
+        userRepository.update(id, user);
         log.info("Был обновлён пользователь с id: {}", id);
         return user;
     }
@@ -138,7 +137,7 @@ public class UserService {
             }
         }
 
-        userStorage.delete(id);
+        userRepository.delete(id);
         log.info("Был удалён пользователь с id: {}", id);
     }
 
@@ -156,26 +155,28 @@ public class UserService {
                 new NotFoundException("Список пользоваталей и так пуст"),
                 "Попытка очистить список пользователей, который и так пуст");
 
-        userStorage.deleteAll();
+        userRepository.deleteAll();
         log.info("Список пользователей был очищен");
 
     }
 
+    //todo подправить, как в filmService
     private void validateUserExists(Optional<Long> id,
                                     RuntimeException e, String logMessage) {
         if (id.isPresent()) {
-            if (userStorage.get(id.get()) == null) {
+            if (userRepository.get(id.get()) == null) {
                 log.info(logMessage);
                 throw e;
             }
         } else {
-            if (userStorage.getAll() == null || userStorage.getAll().isEmpty()) {
+            if (userRepository.getAll() == null || userRepository.getAll().isEmpty()) {
                 log.info(logMessage);
                 throw e;
             }
         }
     }
 
+    //todo подправить
     private void updateFriends(User oldUser, User newUser) {
         if (!oldUser.getFriends().equals(newUser.getFriends())) {
             for (Long friendId : oldUser.getFriends()) {
@@ -187,13 +188,5 @@ public class UserService {
                 friend.getFriends().add(newUser.getId());
             }
         }
-    }
-
-    private Long getNextId() {
-        Long nextId = userStorage.getMap().keySet().stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++nextId;
     }
 }

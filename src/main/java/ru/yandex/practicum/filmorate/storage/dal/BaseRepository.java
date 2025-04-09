@@ -10,11 +10,13 @@ import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 public class BaseRepository<T> {
     protected final JdbcTemplate jdbc;
     protected final RowMapper<T> mapper;
+    protected static final String GET_CURRENT_MAX_ID = "SELECT MAX(id) FROM ?";
 
     protected T findOne(String query, Object... params) {
         try {
@@ -64,5 +66,10 @@ public class BaseRepository<T> {
         } else {
             throw new InternalServerException("Не удалось сохранить данные");
         }
+    }
+
+    protected Long nextIdByTable(String tableName) {
+        Optional<Long> id = Optional.ofNullable(jdbc.queryForObject(GET_CURRENT_MAX_ID, Long.class, tableName));
+        return id.map(value -> value + 1).orElse(1L);
     }
 }

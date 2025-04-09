@@ -40,8 +40,8 @@ INSERT INTO film_rating (film_id, rating_id) VALUES
 (5, 1);
 
 INSERT INTO friendship_status (id, name) VALUES
-(1, 'unconfirmed'),
-(2, 'confirmed');
+(1, 'UNCONFIRMED'),
+(2, 'CONFIRMED');
 
 -- если А дружит с Б, то и Б дружит с А. Статус дружбы при этом одинаков у обоих.
 INSERT INTO "friend" (user_id, friend_id, friendship_status_id) VALUES

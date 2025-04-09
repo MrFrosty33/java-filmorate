@@ -27,7 +27,7 @@ public class UserRowMapper implements RowMapper<User> {
                 .build();
 
         user.toBuilder()
-                .friendStatusMap(getFriendshipStatus(user.getId()))
+                .friendStatusMap(getFriendStatusMap(user.getId()))
                 .build();
 
         return user;
@@ -41,7 +41,7 @@ public class UserRowMapper implements RowMapper<User> {
 //        return new HashSet<>(jdbc.queryForList(stm, Long.class));
 //    }
 
-    private Map<Long, FriendshipStatus> getFriendshipStatus(long id) {
+    private Map<Long, FriendshipStatus> getFriendStatusMap(long id) {
         String stm = "SELECT f.friend_id AS id, fs.name AS status " +
                 "FROM \"user\" u " +
                 "INNER JOIN \"friend\" f ON u.id = f.user_id " +

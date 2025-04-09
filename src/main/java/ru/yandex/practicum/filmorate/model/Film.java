@@ -35,11 +35,12 @@ public class Film {
     private long duration;
 
     // хранит в себе ID пользователей поставихших лайк фильму
+    @NotNull
     private Set<Long> likes;
-
-    // Какие проверки стоит сделать?
-    // Может ли у фильма отсутствовать жанр, как и рейтинг?
+    @NotNull
     private Set<Genre> genres;
+    @NotNull
+    @NotBlank
     private RatingMpa ratingMpa;
 
     public int getRate() {

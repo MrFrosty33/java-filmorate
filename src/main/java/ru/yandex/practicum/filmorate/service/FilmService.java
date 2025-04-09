@@ -2,25 +2,29 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.BadRequestParamException;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
+import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FilmService {
-    private final FilmStorage filmStorage;
+    private final FilmRepository filmRepository;
+    private final UserRepository userRepository;
     private final UserService userService;
-    private final UserStorage userStorage;
 
     public static final Comparator<Film> FILM_COMPARATOR =
             Comparator.comparingLong(Film::getRate).reversed();
@@ -31,7 +35,7 @@ public class FilmService {
                 "Попытка получить несуществующий фильм с id: " + id);
 
         log.info("Получен фильм с id: {}", id);
-        return filmStorage.get(id);
+        return filmRepository.get(id);
     }
 
     public Collection<Film> getAll() {
@@ -40,9 +44,10 @@ public class FilmService {
                 "Попытка получить список фильмов, который пуст");
 
         log.info("Получен список всех фильмов");
-        return filmStorage.getAll();
+        return filmRepository.getAll();
     }
 
+    //todo переделать
     public Collection<Film> getPopular(int count) {
         validateFilmExists(Optional.empty(),
                 new NotFoundException("Список фильмов пуст"),
@@ -53,29 +58,24 @@ public class FilmService {
             throw new BadRequestParamException("count не может быть меньше или равен 0");
         }
 
-        if (count > filmStorage.getAll().size()) {
-            count = filmStorage.getAll().size();
+        if (count > filmRepository.getAll().size()) {
+            count = filmRepository.getAll().size();
         }
 
         log.info("Получен список из {} наиболее популярных фильмов", count);
-        return filmStorage.getAll().stream()
+        return filmRepository.getAll().stream()
                 .sorted(FILM_COMPARATOR)
                 .limit(count)
                 .collect(Collectors.toList());
     }
 
     public Film add(Film film) {
-        film.setId(getNextId());
-        if (film.getLikes() == null) {
-            film.setLikes(new HashSet<>());
-        }
-
         if (!film.getLikes().isEmpty()) {
             log.info("Попытка добавить новый фильм с уже поставленными ему лайками");
             throw new ConflictException("Новый фильм не может содержать лайки");
         }
 
-        filmStorage.add(film.getId(), film);
+        film = filmRepository.add(film);
         log.info("Был добавлен фильм с id: {}", film.getId());
         return film;
     }
@@ -93,13 +93,10 @@ public class FilmService {
                 new NotFoundException("Фильм с id: " + film.getId() + " не существует"),
                 "Попытка обновить несуществующий фильм с id: " + film.getId());
 
-        if (film.getLikes() == null) {
-            film.setLikes(new HashSet<>());
-        }
         validateLikes(get(film.getId()), film);
 
         log.info("Был обновлён фильм с id: {}", film.getId());
-        filmStorage.update(film);
+        filmRepository.update(film);
         return film;
     }
 
@@ -112,7 +109,7 @@ public class FilmService {
         film.setId(id);
 
         log.info("Был обновлён фильм с id: {}", id);
-        filmStorage.update(id, film);
+        filmRepository.update(id, film);
         return film;
     }
 
@@ -122,13 +119,13 @@ public class FilmService {
                 "Попытка удалить несуществующий фильм с id: " + id);
 
 
-        filmStorage.delete(id);
+        filmRepository.delete(id);
         log.info("Был удалён фильм с id: {}", id);
     }
 
     public void deleteLike(Long id, Long userId) {
         Film film = get(id);
-        User user = userStorage.get(userId);
+        User user = userRepository.get(userId);
 
         if (film.getLikes().contains(userId)) {
             film.getLikes().remove(userId);
@@ -142,24 +139,27 @@ public class FilmService {
     }
 
     public void deleteAll() {
-        filmStorage.deleteAll();
+        filmRepository.deleteAll();
     }
 
     private void validateFilmExists(Optional<Long> id,
                                     RuntimeException e, String logMessage) {
         if (id.isPresent()) {
-            if (filmStorage.get(id.get()) == null) {
+            try {
+                filmRepository.get(id.get());
+            } catch (EmptyResultDataAccessException ex) {
                 log.info(logMessage);
                 throw e;
             }
         } else {
-            if (filmStorage.getAll() == null || filmStorage.getAll().isEmpty()) {
+            if (filmRepository.getAll() == null || filmRepository.getAll().isEmpty()) {
                 log.info(logMessage);
                 throw e;
             }
         }
     }
 
+    //todo переделать под репозиторий потом
     private void validateLikes(Film oldFilm, Film newFilm) {
         if (!oldFilm.getLikes().equals(newFilm.getLikes())) {
             for (Long likeId : newFilm.getLikes()) {
@@ -167,13 +167,5 @@ public class FilmService {
                 User user = userService.get(likeId);
             }
         }
-    }
-
-    private Long getNextId() {
-        Long nextId = filmStorage.getMap().keySet().stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++nextId;
     }
 }
