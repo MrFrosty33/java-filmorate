@@ -43,7 +43,7 @@ INSERT INTO friendship_status (id, name) VALUES
 (1, 'UNCONFIRMED'),
 (2, 'CONFIRMED');
 
--- если А дружит с Б, то и Б дружит с А. Статус дружбы при этом одинаков у обоих.
+-- если А дружит с Б, то пока Б не отправил запрос к А, статус дружбы "unconfirmed"
 INSERT INTO "friend" (user_id, friend_id, friendship_status_id) VALUES
 (1, 2, 2),
 (1, 3, 1),

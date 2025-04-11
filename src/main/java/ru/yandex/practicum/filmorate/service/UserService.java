@@ -35,6 +35,7 @@ public class UserService {
     }
 
 
+    //todo перелопатить всё тут под новую логику
     public Collection<User> getCommonFriends(Long id, Long otherId) {
         final User user = userRepository.get(id);
         final User other = userRepository.get(otherId);
@@ -81,6 +82,8 @@ public class UserService {
     }
 
     public User addFriend(Long id, Long friendId) {
+        // если А дружит с Б, то пока Б не отправил запрос к А, статус дружбы "unconfirmed"
+        //todo доработать эту логику
         User user = get(id);
         User friend = get(friendId);
         if (id.equals(friendId)) {

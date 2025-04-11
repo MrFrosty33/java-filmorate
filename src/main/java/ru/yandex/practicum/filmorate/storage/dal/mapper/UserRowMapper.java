@@ -48,16 +48,14 @@ public class UserRowMapper implements RowMapper<User> {
                 "INNER JOIN friendship_status fs ON f.friendship_status_id = fs.id " +
                 "WHERE u.id = " + id;
 
-        Map<Long, FriendshipStatus> result = jdbc.query(stm, rs -> {
-            Map<Long, FriendshipStatus> map = new HashMap<>();
+        return jdbc.query(stm, rs -> {
+            Map<Long, FriendshipStatus> result = new HashMap<>();
             while (rs.next()) {
                 Long friendId = rs.getLong("id");
                 FriendshipStatus status = FriendshipStatus.valueOf(rs.getString("status"));
-                map.put(friendId, status);
+                result.put(friendId, status);
             }
-            return map;
+            return result;
         });
-
-        return result;
     }
 }
