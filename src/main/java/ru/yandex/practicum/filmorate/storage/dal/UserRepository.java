@@ -35,7 +35,7 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     private static final String UPDATE_QUERY = "UPDATE \"user\" " +
             "SET id = ?, email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
     private static final String UPDATE_FRIENDSHIP_STATUS_QUERY = "UPDATE \"friend\" " +
-            "SET user_id = ?, friend_id = ?, friendship_status_id = ?";
+            "SET user_id = ?, friend_id = ?, friendship_status_id = ? WHERE user_id = ? AND friend_id = ?";
 
     private static final String DELETE_BY_ID_QUERY = "DELETE FROM \"user\" WHERE id = ?";
     private static final String DELETE_ALL_QUERY = "DELETE FROM \"user\" ";
@@ -150,8 +150,10 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     public FriendshipStatus updateFriendshipStatus(Long id, Long friendId, FriendshipStatus friendshipStatus) {
         update(UPDATE_FRIENDSHIP_STATUS_QUERY,
                 id,
+                friendId,
                 friendshipStatus,
-                friendshipStatus);
+                id,
+                friendId);
 
         return getFriendshipStatus(id, friendId);
     }
