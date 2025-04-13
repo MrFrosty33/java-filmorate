@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 
 public class FilmTest {
     private Validator validator;
@@ -17,6 +18,9 @@ public class FilmTest {
             .description("A mind-bending thriller.")
             .releaseDate(LocalDate.of(2010, 7, 16))
             .duration(148)
+            .likes(new HashSet<>())
+            .genres(new HashSet<>())
+            .ratingMpa(RatingMpa.R)
             .build();
 
     @BeforeEach

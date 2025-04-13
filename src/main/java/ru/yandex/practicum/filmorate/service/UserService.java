@@ -88,11 +88,6 @@ public class UserService {
         return userRepository.get(user.getId());
     }
 
-    public User add(Long id, User user) {
-        user.setId(id);
-        return add(user);
-    }
-
     // Стоит возвращать целиком пользователя, или же только статус дружбы, полученный в ходе выполнения метода?
     public User addFriend(Long id, Long friendId) {
         // если А дружит с Б, то пока Б не отправил запрос к А, статус дружбы UNCONFIRMED
@@ -122,7 +117,7 @@ public class UserService {
         }
         // если же нет таких записей, то добавляем дружбу пользователя А с Б со статусом UNCONFIRMED
         catch (EmptyResultDataAccessException e) {
-            status = FriendshipStatus.UNCOFIRMED;
+            status = FriendshipStatus.UNCONFIRMED;
             log.info("В таблице friend была добавлена запись с id: {} и id: {}, со статусом: {}", id, friendId, status);
             userRepository.addFriend(id, friendId, status);
         }
@@ -131,13 +126,15 @@ public class UserService {
     }
 
     public User update(User user) {
-        validateUserExists(Optional.of(user.getId()),
-                new NotFoundException("Не существует пользователь с id: " + user.getId()),
-                "Попытка обновить несуществующего пользователя с id: " + user.getId());
+        Long id = user.getId();
+
+        validateUserExists(Optional.of(id),
+                new NotFoundException("Не существует пользователь с id: " + id),
+                "Попытка обновить несуществующего пользователя с id: " + id);
 
         userRepository.update(user);
-        log.info("Был обновлён пользователь с id: {}", user.getId());
-        return userRepository.get(user.getId());
+        log.info("Был обновлён пользователь с id: {}", id);
+        return userRepository.get(id);
     }
 
     public User update(Long id, User user) {
@@ -183,20 +180,23 @@ public class UserService {
 
     private void validateUserExists(Optional<Long> id,
                                     RuntimeException e, String logMessage) {
-        if (id.isPresent()) {
-            try {
-                userRepository.get(id.get());
-            } catch (EmptyResultDataAccessException ex) {
-                log.info(logMessage);
-                throw e;
+        try {
+            if (id.isPresent()) {
+                Optional<User> result = Optional.ofNullable(userRepository.get(id.get()));
+                if (result.isEmpty()) {
+                    log.info(logMessage);
+                    throw e;
+                }
+            } else {
+                Optional<Collection<User>> result = Optional.ofNullable(userRepository.getAll());
+                if (result.isEmpty()) {
+                    log.info(logMessage);
+                    throw e;
+                }
             }
-        } else {
-            try {
-                userRepository.getAll();
-            } catch (EmptyResultDataAccessException ex) {
-                log.info(logMessage);
-                throw e;
-            }
+        } catch (EmptyResultDataAccessException ex) {
+            log.info(logMessage);
+            throw e;
         }
     }
 }

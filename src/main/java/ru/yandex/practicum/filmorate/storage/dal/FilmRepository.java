@@ -1,9 +1,9 @@
 package ru.yandex.practicum.filmorate.storage.dal;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Slf4j
-@Qualifier
+@Repository
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
     // Достаточно ли понятные названия? Стоит ли над ними ещё подумать?
     private static final String GET_ONE_QUERY = "SELECT * FROM film WHERE id = ?";

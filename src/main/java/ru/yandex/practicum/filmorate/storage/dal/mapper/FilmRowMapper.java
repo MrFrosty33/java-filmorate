@@ -28,7 +28,7 @@ public class FilmRowMapper implements RowMapper<Film> {
                 .duration(resultSet.getLong("duration"))
                 .build();
 
-        film.toBuilder()
+        film = film.toBuilder()
                 .likes(getLikes(film.getId()))
                 .genres(getGenres(film.getId()))
                 .ratingMpa(getRating(film.getId()))

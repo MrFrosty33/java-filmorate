@@ -40,7 +40,6 @@ public class Film {
     @NotNull
     private Set<Genre> genres;
     @NotNull
-    @NotBlank
     private RatingMpa ratingMpa;
 
     public int getRate() {

@@ -66,11 +66,6 @@ public class FilmService {
         return film;
     }
 
-    public Film add(Long id, Film film) {
-        film.setId(id);
-        return add(film);
-    }
-
     public Set<Long> addLike(Long filmId, Long userId) {
         Film film = get(filmId);
         User user = userService.get(userId);
@@ -81,13 +76,15 @@ public class FilmService {
     }
 
     public Film update(Film film) {
-        validateFilmExists(Optional.of(film.getId()),
-                new NotFoundException("Фильм с id: " + film.getId() + " не существует"),
-                "Попытка обновить несуществующий фильм с id: " + film.getId());
+        Long id = film.getId();
 
-        log.info("Был обновлён фильм с id: {}", film.getId());
+        validateFilmExists(Optional.of(id),
+                new NotFoundException("Фильм с id: " + id + " не существует"),
+                "Попытка обновить несуществующий фильм с id: " + id);
+
+        log.info("Был обновлён фильм с id: {}", id);
         filmRepository.update(film);
-        return filmRepository.get(film.getId());
+        return filmRepository.get(id);
     }
 
     // В репозитории оставил один метод update(Film film)
@@ -132,20 +129,23 @@ public class FilmService {
 
     private void validateFilmExists(Optional<Long> id,
                                     RuntimeException e, String logMessage) {
-        if (id.isPresent()) {
-            try {
-                filmRepository.get(id.get());
-            } catch (EmptyResultDataAccessException ex) {
-                log.info(logMessage);
-                throw e;
+        try {
+            if (id.isPresent()) {
+                Optional<Film> result = Optional.ofNullable(filmRepository.get(id.get()));
+                if (result.isEmpty()) {
+                    log.info(logMessage);
+                    throw e;
+                }
+            } else {
+                Optional<Collection<Film>> result = Optional.ofNullable(filmRepository.getAll());
+                if (result.isEmpty()) {
+                    log.info(logMessage);
+                    throw e;
+                }
             }
-        } else {
-            try {
-                filmRepository.getAll();
-            } catch (EmptyResultDataAccessException ex) {
-                log.info(logMessage);
-                throw e;
-            }
+        } catch (EmptyResultDataAccessException ex) {
+            log.info(logMessage);
+            throw e;
         }
     }
 }

@@ -26,7 +26,7 @@ public class UserRowMapper implements RowMapper<User> {
                 .birthday(rs.getDate("birthday").toLocalDate())
                 .build();
 
-        user.toBuilder()
+        user = user.toBuilder()
                 .friendStatusMap(getFriendStatusMap(user.getId()))
                 .build();
 
