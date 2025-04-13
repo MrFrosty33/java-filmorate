@@ -13,15 +13,17 @@ public interface UserStorage {
 
     Collection<User> getCommonFriends(Long id, Long otherId);
 
-    User add(User user);
+    public Collection<User> getAllFriends(Long id);
 
-    User add(Long id, User user);
+    FriendshipStatus getFriendshipStatus(Long id, Long otherId);
+
+    User add(User user);
 
     User addFriend(Long id, Long friendId, FriendshipStatus status);
 
     User update(User user);
 
-    User update(Long id, User user);
+    FriendshipStatus updateFriendshipStatus(Long id, Long friendId, FriendshipStatus friendshipStatus);
 
     boolean delete(Long id);
 

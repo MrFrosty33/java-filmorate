@@ -33,8 +33,8 @@ public class FilmService {
 
     public Collection<Film> getAll() {
         validateFilmExists(Optional.empty(),
-                new NotFoundException("Список фильмов пуст"),
-                "Попытка получить список фильмов, который пуст");
+                new NotFoundException("Таблица film пуста"),
+                "Попытка получить данные из таблицы film, которая пуста");
 
         log.info("Получен список всех фильмов");
         return filmRepository.getAll();
@@ -42,8 +42,8 @@ public class FilmService {
 
     public Collection<Film> getPopular(int limit) {
         validateFilmExists(Optional.empty(),
-                new NotFoundException("Список фильмов пуст"),
-                "Попытка получить список фильмов, который пуст");
+                new NotFoundException("Таблица film пуста"),
+                "Попытка получить данные из таблицы film, которая пуста");
 
         if (limit <= 0) {
             log.info("Попытка получить список популярных фильмов c limit = {}", limit);
@@ -66,6 +66,11 @@ public class FilmService {
         return film;
     }
 
+    public Film add(Long id, Film film) {
+        film.setId(id);
+        return add(film);
+    }
+
     public Set<Long> addLike(Long filmId, Long userId) {
         Film film = get(filmId);
         User user = userService.get(userId);
@@ -80,24 +85,15 @@ public class FilmService {
                 new NotFoundException("Фильм с id: " + film.getId() + " не существует"),
                 "Попытка обновить несуществующий фильм с id: " + film.getId());
 
-        validateLikes(get(film.getId()), film);
-
         log.info("Был обновлён фильм с id: {}", film.getId());
         filmRepository.update(film);
-        return film;
+        return filmRepository.get(film.getId());
     }
 
+    // В репозитории оставил один метод update(Film film)
     public Film update(Long id, Film film) {
-        validateFilmExists(Optional.of(id),
-                new NotFoundException("Фильм с id: " + id + " не существует"),
-                "Попытка обновить несуществующий фильм с id: " + id);
-        validateLikes(get(id), film);
-        // на всякий случай, вдруг id объекта отличается от заданного
         film.setId(id);
-
-        log.info("Был обновлён фильм с id: {}", id);
-        filmRepository.update(id, film);
-        return film;
+        return update(film);
     }
 
     public void delete(Long id) {
@@ -108,6 +104,15 @@ public class FilmService {
 
         filmRepository.delete(id);
         log.info("Был удалён фильм с id: {}", id);
+    }
+
+    public void deleteAll() {
+        validateFilmExists(Optional.empty(),
+                new NotFoundException("Таблица film пуста"),
+                "Попытка очистить таблицу film, которая и так пуста");
+
+        filmRepository.deleteAll();
+        log.info("Таблица film была очищена");
     }
 
     public void deleteLike(Long filmId, Long userId) {
@@ -125,10 +130,6 @@ public class FilmService {
         }
     }
 
-    public void deleteAll() {
-        filmRepository.deleteAll();
-    }
-
     private void validateFilmExists(Optional<Long> id,
                                     RuntimeException e, String logMessage) {
         if (id.isPresent()) {
@@ -139,19 +140,11 @@ public class FilmService {
                 throw e;
             }
         } else {
-            if (filmRepository.getAll() == null || filmRepository.getAll().isEmpty()) {
+            try {
+                filmRepository.getAll();
+            } catch (EmptyResultDataAccessException ex) {
                 log.info(logMessage);
                 throw e;
-            }
-        }
-    }
-
-    //todo переделать под репозиторий потом
-    private void validateLikes(Film oldFilm, Film newFilm) {
-        if (!oldFilm.getLikes().equals(newFilm.getLikes())) {
-            for (Long likeId : newFilm.getLikes()) {
-                // проверка, существует ли пользователь
-                User user = userService.get(likeId);
             }
         }
     }

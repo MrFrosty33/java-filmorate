@@ -9,12 +9,12 @@ import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Qualifier
 public class UserRepository extends BaseRepository<User> implements UserStorage {
+    // Достаточно ли понятные названия? Стоит ли над ними ещё подумать?
     private static final String GET_ONE_QUERY = "SELECT * FROM \"user\"  WHERE id = ?";
     private static final String GET_ALL_QUERY = "SELECT * FROM \"user\" ";
     private static final String GET_FRIENDSHIP_STATUS_ID_BY_NAME_QUERY = "SELECT id FROM friendship_status " +
@@ -25,6 +25,7 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             "FROM \"friend\" WHERE user_id = ? AND friend_id = ? ";
     private static final String GET_COMMON_FRIENDS_BETWEEN_USERS_QUERY = "SELECT friend_id FROM \"friend\" " +
             "WHERE user_id = ? INTERSECT SELECT friend_id FROM \"friend\" WHERE user_id = ?";
+    private static final String GET_ALL_FRIENDS_BY_USER_ID = "SELECT friend_id FROM \"friend\" WHERE user_id = ?";
 
     private static final String INSERT_QUERY = "INSERT INTO \"user\" (id, email, login, name, birthday)" +
             " VALUES (?, ?, ?, ?, ?)";
@@ -33,16 +34,19 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
 
     private static final String UPDATE_QUERY = "UPDATE \"user\" " +
             "SET id = ?, email = ?, login = ?, name = ?, birthday = ? ";
+    private static final String UPDATE_FRIENDSHIP_STATUS_QUERY = "UPDATE \"friend\" " +
+            "SET user_id = ?, friend_id = ?, friendship_status_id = ?";
 
     private static final String DELETE_BY_ID_QUERY = "DELETE FROM \"user\" WHERE id = ?";
     private static final String DELETE_ALL_QUERY = "DELETE FROM \"user\" ";
-    private static final String DELETE_FRIEND_QUERY = "DELETE FROM \"friend\" WHERE user_id = ?";
+    private static final String DELETE_ALL_FRIENDS_BY_USER_ID_QUERY = "DELETE FROM \"friend\" WHERE user_id = ?";
+    private static final String DELETE_FRIENDS_BY_USER_AND_FRIEND_ID_QUERY = "DELETE FROM \"friend\" " +
+            "WHERE user_id = ? AND friend_id = ?";
     private static final String DELETE_ALL_FRIENDS_QUERY = "DELETE FROM \"friend\" ";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
     }
-
 
     @Override
     public User get(Long id) {
@@ -54,7 +58,14 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         return findMany(GET_ALL_QUERY);
     }
 
+    //todo сработает ли?
+    @Override
+    public Collection<User> getCommonFriends(Long id, Long otherId) {
+        return findMany(GET_COMMON_FRIENDS_BETWEEN_USERS_QUERY, id, otherId);
+    }
+
     //todo интересно, правильно ли написал метод
+    @Override
     public FriendshipStatus getFriendshipStatus(Long id, Long otherId) {
         // метод проверяет, существует ли уже заявка о дружбе с одной стороны
         // если есть - возвращает CONFIRMED, иначе - UNCONFIRMED
@@ -66,10 +77,15 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         );
     }
 
-    //todo сработает ли?
-    @Override
-    public Collection<User> getCommonFriends(Long id, Long otherId) {
-        return findMany(GET_COMMON_FRIENDS_BETWEEN_USERS_QUERY, id, otherId);
+    public Collection<User> getAllFriends(Long id) {
+        Set<Long> friendIds = new HashSet<>(jdbc.queryForList(GET_ALL_FRIENDS_BY_USER_ID, Long.class, id));
+        Collection<User> result = new ArrayList<>();
+
+        for (Long friendId : friendIds) {
+            result.add(get(friendId));
+        }
+
+        return result;
     }
 
     @Override
@@ -87,26 +103,10 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
                 user.getName(),
                 user.getBirthday());
 
-        // Заполняем таблицу friend
-        Map<Long, FriendshipStatus> friendStatusMap = user.getFriendStatusMap();
-        if (!friendStatusMap.isEmpty()) {
-            for (Long friendId : friendStatusMap.keySet()) {
-                Long statusId = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_BY_NAME_QUERY,
-                        Long.class,
-                        friendStatusMap.get(friendId));
-                insert(INSERT_FRIEND_STATUS_QUERY, user.getId(), friendId, statusId);
-                insert(INSERT_FRIEND_STATUS_QUERY, friendId, user.getId(), statusId);
-            }
-        }
+        // Сперва я тут проверял наличие друзей у нового пользователя и добавлял данные в таблицу friend
+        // Но потом вспомнил, что у нового пользователя не может быть друзей и вырезал эту логику
 
         return get(insertId);
-    }
-
-    @Override
-    public User add(Long id, User user) {
-        // Предполагается, что переданный id будет корректен
-        user.setId(id);
-        return add(user);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
                 user.getBirthday());
 
         if (!oldUser.getFriendStatusMap().equals(user.getFriendStatusMap())) {
-            jdbc.update(DELETE_FRIEND_QUERY, oldUser.getId());
+            jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID_QUERY, oldUser.getId());
 
             Map<Long, FriendshipStatus> friendStatusMap = user.getFriendStatusMap();
 
@@ -148,15 +148,19 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     }
 
     @Override
-    public User update(Long id, User user) {
-        user.setId(id);
-        return update(user);
+    public FriendshipStatus updateFriendshipStatus(Long id, Long friendId, FriendshipStatus friendshipStatus) {
+        update(UPDATE_FRIENDSHIP_STATUS_QUERY,
+                id,
+                friendshipStatus,
+                friendshipStatus);
+
+        return getFriendshipStatus(id, friendId);
     }
 
     @Override
     public boolean delete(Long id) {
         boolean deleteUser = deleteOne(DELETE_BY_ID_QUERY, id);
-        boolean deleteFriend = jdbc.update(DELETE_FRIEND_QUERY, id) > 0;
+        boolean deleteFriend = jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID_QUERY, id) > 0;
 
         if (!deleteUser) {
             log.info("Произошла ошибка при удалении записи из таблицы user с id: {}", id);
@@ -189,6 +193,15 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
 
     @Override
     public boolean deleteFriend(Long id, Long friendId) {
-        return false;
+        boolean deleteFriend = jdbc.update(DELETE_FRIENDS_BY_USER_AND_FRIEND_ID_QUERY, id, friendId) > 0;
+
+        if (!deleteFriend) {
+            log.info("Произошла ошибка при удалении записи из таблицы friend " +
+                    "с user_id: {} и friend_id: {} ", id, friendId);
+            throw new InternalServerException("Произошла ошибка при удалении записи из таблицы friend " +
+                    "с user_id: " + id + " и friend_id: " + friendId);
+        }
+
+        return true;
     }
 }

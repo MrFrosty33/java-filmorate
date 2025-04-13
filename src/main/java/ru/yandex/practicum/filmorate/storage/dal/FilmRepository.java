@@ -16,6 +16,7 @@ import java.util.Set;
 @Slf4j
 @Qualifier
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
+    // Достаточно ли понятные названия? Стоит ли над ними ещё подумать?
     private static final String GET_ONE_QUERY = "SELECT * FROM film WHERE id = ?";
     private static final String GET_ALL_QUERY = "SELECT * FROM film";
     private static final String GET_GENRE_ID_BY_NAME = "SELECT id FROM genre WHERE name in (?)";
@@ -108,14 +109,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         return get(insertId);
     }
 
-    // Нужен ли этот метод вообще теперь?
-    @Override
-    public Film add(Long id, Film film) {
-        // Предполагается, что переданный id будет корректен
-        film.setId(id);
-        return add(film);
-    }
-
     @Override
     public Set<Long> addLike(Long filmId, Long userId) {
         insert(INSERT_LIKE_QUERY, userId, filmId);
@@ -161,13 +154,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         insert(INSERT_FILM_RATING_QUERY, film.getId(), ratingId);
 
         return get(film.getId());
-    }
-
-    // И этот метод, нужен ли?
-    @Override
-    public Film update(Long id, Film film) {
-        film.setId(id);
-        return update(film);
     }
 
     @Override

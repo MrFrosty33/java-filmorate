@@ -15,13 +15,9 @@ public interface FilmStorage {
 
     Film add(Film film);
 
-    Film add(Long id, Film film);
-
     Set<Long> addLike(Long filmId, Long userId);
 
     Film update(Film film);
-
-    Film update(Long id, Film film);
 
     boolean delete(Long id);
 
