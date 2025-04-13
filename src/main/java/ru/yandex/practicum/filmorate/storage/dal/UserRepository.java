@@ -33,7 +33,7 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             "(user_id, friend_id, friendship_status_id) VALUES (?, ?, ?)";
 
     private static final String UPDATE_QUERY = "UPDATE \"user\" " +
-            "SET id = ?, email = ?, login = ?, name = ?, birthday = ? ";
+            "SET id = ?, email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
     private static final String UPDATE_FRIENDSHIP_STATUS_QUERY = "UPDATE \"friend\" " +
             "SET user_id = ?, friend_id = ?, friendship_status_id = ?";
 
@@ -126,7 +126,8 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
                 user.getEmail(),
                 user.getLogin(),
                 user.getName(),
-                user.getBirthday());
+                user.getBirthday(),
+                user.getId());
 
         if (!oldUser.getFriendStatusMap().equals(user.getFriendStatusMap())) {
             jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID_QUERY, oldUser.getId());
