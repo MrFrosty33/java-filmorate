@@ -119,9 +119,8 @@ public class UserService {
             userRepository.updateFriendshipStatus(friendId, id, status);
             log.info("В таблице friend была добавлена запись с id: {} и id: {}, со статусом: {}", id, friendId, status);
             userRepository.addFriend(id, friendId, status);
-        }
-        // если же нет таких записей, то добавляем дружбу пользователя А с Б со статусом UNCONFIRMED
-        catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException e) {
+            // если же нет таких записей, то добавляем дружбу пользователя А с Б со статусом UNCONFIRMED
             status = FriendshipStatus.UNCONFIRMED;
             log.info("В таблице friend была добавлена запись с id: {} и id: {}, со статусом: {}", id, friendId, status);
             userRepository.addFriend(id, friendId, status);
