@@ -58,13 +58,11 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         return findMany(GET_ALL_QUERY);
     }
 
-    //todo сработает ли?
     @Override
     public Collection<User> getCommonFriends(Long id, Long otherId) {
         return findMany(GET_COMMON_FRIENDS_BETWEEN_USERS_QUERY, id, otherId);
     }
 
-    //todo интересно, правильно ли написал метод
     @Override
     public FriendshipStatus getFriendshipStatus(Long id, Long otherId) {
         // метод проверяет, существует ли уже заявка о дружбе с одной стороны
@@ -96,7 +94,7 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             // Здесь, дабы читалось чуть проще, можно передавать просто user
             user.setId(nextIdByTable("user"));
         }
-        long insertId = insert(INSERT_QUERY,
+        insert(INSERT_QUERY,
                 user.getId(),
                 user.getEmail(),
                 user.getLogin(),
@@ -106,7 +104,7 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         // Сперва я тут проверял наличие друзей у нового пользователя и добавлял данные в таблицу friend
         // Но потом вспомнил, что у нового пользователя не может быть друзей и вырезал эту логику
 
-        return get(insertId);
+        return get(user.getId());
     }
 
     @Override

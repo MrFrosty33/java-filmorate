@@ -5,11 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
 
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,14 +28,15 @@ public class BaseRepository<T> {
         return jdbc.query(query, mapper, params);
     }
 
-    protected boolean deleteOne(String query, long id) {
-        int rowsDeleted = jdbc.update(query, id);
-        return rowsDeleted > 0;
-    }
+    protected void insert(String query, Object... params) {
+        int rowsUpdated = jdbc.update(query, params);
 
-    protected boolean deleteAll(String query) {
-        int rowsDeleted = jdbc.update(query);
-        return rowsDeleted > 0;
+        if (rowsUpdated != 0) {
+            // добавился успешно, игнорируем
+        } else {
+            log.info("Ошибка при добавлении данных в БД");
+            throw new InternalServerException("Не удалось сохранить данные");
+        }
     }
 
     protected void update(String query, Object... params) {
@@ -49,30 +47,18 @@ public class BaseRepository<T> {
         }
     }
 
-    protected long insert(String query, Object... params) {
-        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(connection -> {
-            PreparedStatement ps = connection
-                    .prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-            for (int idx = 0; idx < params.length; idx++) {
-                ps.setObject(idx + 1, params[idx]);
-            }
-            return ps;
-        }, keyHolder);
+    protected boolean deleteOne(String query, long id) {
+        int rowsDeleted = jdbc.update(query, id);
+        return rowsDeleted > 0;
+    }
 
-        Long id = keyHolder.getKeyAs(Long.class);
-
-        // Возвращаем id нового пользователя
-        if (id != null) {
-            return id;
-        } else {
-            log.info("Ошибка при добавлении данных в БД");
-            throw new InternalServerException("Не удалось сохранить данные");
-        }
+    protected boolean deleteAll(String query) {
+        int rowsDeleted = jdbc.update(query);
+        return rowsDeleted > 0;
     }
 
     protected Long nextIdByTable(String tableName) {
-        String GET_CURRENT_MAX_ID = "SELECT MAX(id) FROM ?";
+        String stm = "SELECT MAX(id) FROM ";
 
         // чтобы работало лишь с таблицами, откуда возможно и может потребоваться получить ID
         switch (tableName) {
@@ -93,7 +79,9 @@ public class BaseRepository<T> {
             }
         }
 
-        Optional<Long> id = Optional.ofNullable(jdbc.queryForObject(GET_CURRENT_MAX_ID, Long.class, tableName));
-        return id.map(value -> value + 1).orElse(1L);
+        stm += tableName;
+
+        Optional<Number> id = Optional.ofNullable(jdbc.queryForObject(stm, Number.class));
+        return id.map(value -> value.longValue() + 1).orElse(1L);
     }
 }

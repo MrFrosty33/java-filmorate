@@ -46,18 +46,18 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
             rating.setId(nextIdByTable("genre"));
         }
 
-        Long insertId = insert(INSERT_QUERY,
+        insert(INSERT_QUERY,
                 rating.getId(),
-                rating.getName());
+                rating.getName().getDbName());
 
-        return get(insertId);
+        return get(rating.getId());
     }
 
     @Override
     public RatingMpaDto update(RatingMpaDto rating) {
         update(UPDATE_QUERY,
                 rating.getId(),
-                rating.getName());
+                rating.getName().getDbName());
         return get(rating.getId());
     }
 

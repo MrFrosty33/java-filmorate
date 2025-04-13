@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Optional;
 
 @Slf4j
@@ -78,6 +79,10 @@ public class UserService {
             user.setName(user.getLogin());
         }
 
+        if (user.getFriendStatusMap() == null) {
+            user.setFriendStatusMap(new HashMap<>());
+        }
+
         if (!user.getFriendStatusMap().isEmpty()) {
             log.info("Попытка добавить нового пользователя с уже имеющимися друзьями");
             throw new ConflictException("Новый пользователь не может иметь друзей");
@@ -131,6 +136,10 @@ public class UserService {
         validateUserExists(Optional.of(id),
                 new NotFoundException("Не существует пользователь с id: " + id),
                 "Попытка обновить несуществующего пользователя с id: " + id);
+
+        if (user.getFriendStatusMap() == null) {
+            user.setFriendStatusMap(new HashMap<>());
+        }
 
         userRepository.update(user);
         log.info("Был обновлён пользователь с id: {}", id);

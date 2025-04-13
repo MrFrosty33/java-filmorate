@@ -46,11 +46,11 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
             genre.setId(nextIdByTable("genre"));
         }
 
-        Long insertId = insert(INSERT_QUERY,
+        insert(INSERT_QUERY,
                 genre.getId(),
                 genre.getName());
 
-        return get(insertId);
+        return get(genre.getId());
     }
 
     @Override

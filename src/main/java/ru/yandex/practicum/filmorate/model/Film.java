@@ -35,11 +35,8 @@ public class Film {
     private long duration;
 
     // хранит в себе ID пользователей поставихших лайк фильму
-    @NotNull
     private Set<Long> likes;
-    @NotNull
     private Set<Genre> genres;
-    @NotNull
     private RatingMpa ratingMpa;
 
     public int getRate() {

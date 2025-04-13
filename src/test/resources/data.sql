@@ -1,14 +1,17 @@
 INSERT INTO rating (id, name) VALUES
-(1, 'PG_13'),
-(2, 'R'),
-(3, 'G'),
-(4, 'NC_17'),
-(5, 'PG');
+(1, 'G'),
+(2, 'PG'),
+(3, 'PG-13'),
+(4, 'R'),
+(5, 'NC-17');
 
 INSERT INTO genre (id, name) VALUES
-(1, 'SCIENCE_FICTION'),
-(2, 'ACTION'),
-(3, 'DRAMA');
+(1, 'Комедия'),
+(2, 'Драма'),
+(3, 'Мультфильм'),
+(4, 'Триллер'),
+(5, 'Документальный'),
+(6, 'Боевик');
 
 INSERT INTO film (id, name, description, release_date, duration) VALUES
 (1, 'Inception', 'Inception description', '2010-07-16', 148),
@@ -25,12 +28,12 @@ INSERT INTO "user" (id, email, login, name, birthday) VALUES
 (5, 'michael.green@example.com', 'michaelgreen', 'Michael Green', '1980-06-30');
 
 INSERT INTO film_genre (film_id, genre_id) VALUES
-(1, 1),
 (1, 2),
-(2, 3),
-(3, 2),
-(4, 1),
-(5, 2);
+(2, 6),
+(3, 6),
+(4, 4),
+(5, 2),
+(5, 4);
 
 INSERT INTO film_rating (film_id, rating_id) VALUES
 (1, 1),

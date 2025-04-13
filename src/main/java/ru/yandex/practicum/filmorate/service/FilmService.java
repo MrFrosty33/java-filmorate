@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -56,6 +57,14 @@ public class FilmService {
     }
 
     public Film add(Film film) {
+        if (film.getLikes() == null) {
+            film.setLikes(new HashSet<>());
+        }
+
+        if (film.getGenres() == null) {
+            film.setGenres(new HashSet<>());
+        }
+
         if (!film.getLikes().isEmpty()) {
             log.info("Попытка добавить новый фильм с уже поставленными ему лайками");
             throw new ConflictException("Новый фильм не может содержать лайки");
@@ -81,6 +90,14 @@ public class FilmService {
         validateFilmExists(Optional.of(id),
                 new NotFoundException("Фильм с id: " + id + " не существует"),
                 "Попытка обновить несуществующий фильм с id: " + id);
+
+        if (film.getLikes() == null) {
+            film.setLikes(new HashSet<>());
+        }
+
+        if (film.getGenres() == null) {
+            film.setGenres(new HashSet<>());
+        }
 
         log.info("Был обновлён фильм с id: {}", id);
         filmRepository.update(film);

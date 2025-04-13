@@ -24,7 +24,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String GET_POPULAR_ID = "SELECT film_id FROM \"like\" " +
             "GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
 
-    //TODO работает ли, и требуются ли кавычки для текстовых переменных?
     private static final String INSERT_FILM_QUERY = "INSERT INTO film (id, name, description, release_date, duration)" +
             " VALUES (?, ?, ?, ?, ?)";
     private static final String INSERT_LIKE_QUERY = "INSERT INTO \"like\" (user_id, film_id) VALUES (?, ?)";
@@ -50,8 +49,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         super(jdbc, mapper);
     }
 
-    //TODO тест всех методов!!!
-
     @Override
     public Film get(Long id) {
         return findOne(GET_ONE_QUERY, id);
@@ -76,37 +73,35 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Film add(Film film) {
-        //TODO если не правильно работают эти переменные, также исправить в update
-        final Long ratingId = jdbc.queryForObject(GET_RATING_ID_BY_NAME, Long.class, film.getRatingMpa());
-        final Set<Long> genreId =
-                new HashSet<>(jdbc.queryForList(GET_GENRE_ID_BY_NAME, Long.class, film.getGenres()));
-        final Set<Long> likeUserId = film.getLikes();
+        final Long ratingId;
+        final Set<Long> genreId;
 
         if (film.getId() == null) {
             film.setId(nextIdByTable("film"));
         }
 
-        long insertId = insert(INSERT_FILM_QUERY,
+        insert(INSERT_FILM_QUERY,
                 film.getId(),
                 film.getName(),
+                film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration());
 
-        if (!likeUserId.isEmpty()) {
-            for (Long id : likeUserId) {
-                insert(INSERT_LIKE_QUERY, id, film.getId());
+        if (!film.getGenres().isEmpty()) {
+            genreId = new HashSet<>(jdbc.queryForList(GET_GENRE_ID_BY_NAME, Long.class, film.getGenres()));
+            if (!genreId.isEmpty()) {
+                for (Long id : genreId) {
+                    insert(INSERT_FILM_GENRE_QUERY, film.getId(), id);
+                }
             }
         }
 
-        if (!genreId.isEmpty()) {
-            for (Long id : genreId) {
-                insert(INSERT_FILM_GENRE_QUERY, film.getId(), id);
-            }
+        if (film.getRatingMpa() != null) {
+            ratingId = jdbc.queryForObject(GET_RATING_ID_BY_NAME, Long.class, film.getRatingMpa().getDbName());
+            insert(INSERT_FILM_RATING_QUERY, film.getId(), ratingId);
         }
 
-        insert(INSERT_FILM_RATING_QUERY, film.getId(), ratingId);
-
-        return get(insertId);
+        return get(film.getId());
     }
 
     @Override

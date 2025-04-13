@@ -15,7 +15,7 @@ public class RatingMpaDtoRowMapper implements RowMapper<RatingMpaDto> {
     public RatingMpaDto mapRow(ResultSet rs, int rowNum) throws SQLException {
         return RatingMpaDto.builder()
                 .id(rs.getLong("id"))
-                .name(RatingMpa.valueOf(rs.getString("name")))
+                .name(RatingMpa.fromDbName(rs.getString("name")))
                 .build();
     }
 }

@@ -17,7 +17,6 @@ import java.util.Set;
 public class FilmRowMapper implements RowMapper<Film> {
     private final JdbcTemplate jdbc;
 
-    //TODO протестировать, работает ли вообще
     @Override
     public Film mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         Film film = Film.builder()
