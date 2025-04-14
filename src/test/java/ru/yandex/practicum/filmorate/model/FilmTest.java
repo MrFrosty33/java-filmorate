@@ -6,8 +6,10 @@ import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 
 public class FilmTest {
     private Validator validator;
@@ -17,6 +19,9 @@ public class FilmTest {
             .description("A mind-bending thriller.")
             .releaseDate(LocalDate.of(2010, 7, 16))
             .duration(148)
+            .likes(new HashSet<>())
+            .genres(new HashSet<>())
+            .ratingMpa(RatingMpaDto.builder().name(RatingMpa.R).id(4L).build())
             .build();
 
     @BeforeEach

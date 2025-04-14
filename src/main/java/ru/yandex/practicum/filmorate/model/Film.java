@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,6 +9,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.annotation.MinLocalDate;
+import ru.yandex.practicum.filmorate.model.dto.GenreDto;
+import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -34,12 +37,10 @@ public class Film {
     @Min(1)
     private long duration;
 
-    // хранит в себе ID пользователей поставихших лайк фильму
     private Set<Long> likes;
-
-    //TODO валидация?
-    private Set<Genre> genres;
-    private Set<RatingMpa> ratingMpa;
+    private Set<GenreDto> genres;
+    @JsonProperty("mpa")
+    private RatingMpaDto ratingMpa;
 
     public int getRate() {
         return likes.size();

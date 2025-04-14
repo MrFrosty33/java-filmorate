@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 
 public class UserTest {
     private Validator validator;
@@ -17,6 +18,7 @@ public class UserTest {
             .login("john123")
             .name("John Doe")
             .birthday(LocalDate.of(1990, 5, 15))
+            .friendStatusMap(new HashMap<>())
             .build();
 
     @BeforeEach

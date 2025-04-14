@@ -46,7 +46,7 @@ public class ApplicationExceptionHandler {
         return new ErrorResponse(e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler({InternalServerException.class, Exception.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleOther(Exception e) {
         log.info("ApplicationExceptionHandler поймал {} с сообщением: {}",
