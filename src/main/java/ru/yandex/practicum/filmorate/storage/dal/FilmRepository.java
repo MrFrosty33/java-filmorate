@@ -8,41 +8,37 @@ import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Repository
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
-    // Достаточно ли понятные названия? Стоит ли над ними ещё подумать?
-    private static final String GET_ONE_QUERY = "SELECT * FROM film WHERE id = ?";
-    private static final String GET_ALL_QUERY = "SELECT * FROM film";
+    private static final String GET_ONE = "SELECT * FROM film WHERE id = ?";
+    private static final String GET_ALL = "SELECT * FROM film";
     private static final String GET_GENRE_ID_BY_NAME = "SELECT id FROM genre WHERE name in (?)";
     private static final String GET_RATING_ID_BY_NAME = "SELECT id FROM rating WHERE name IN (?)";
     private static final String GET_POPULAR_ID = "SELECT film_id FROM \"like\" " +
             "GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
 
-    private static final String INSERT_FILM_QUERY = "INSERT INTO film (id, name, description, release_date, duration)" +
+    private static final String INSERT_FILM = "INSERT INTO film (id, name, description, release_date, duration)" +
             " VALUES (?, ?, ?, ?, ?)";
-    private static final String INSERT_LIKE_QUERY = "INSERT INTO \"like\" (user_id, film_id) VALUES (?, ?)";
-    private static final String INSERT_FILM_GENRE_QUERY = "INSERT INTO film_genre (film_id, genre_id) VALUES (?,?)";
-    private static final String INSERT_FILM_RATING_QUERY = "INSERT INTO film_rating (film_id, rating_id) VALUES (?,?)";
+    private static final String INSERT_LIKE = "INSERT INTO \"like\" (user_id, film_id) VALUES (?, ?)";
+    private static final String INSERT_FILM_GENRE = "INSERT INTO film_genre (film_id, genre_id) VALUES (?,?)";
+    private static final String INSERT_FILM_RATING = "INSERT INTO film_rating (film_id, rating_id) VALUES (?,?)";
 
-    private static final String UPDATE_QUERY = "UPDATE film " +
+    private static final String UPDATE_FILM = "UPDATE film " +
             "SET id = ?, name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
 
-    private static final String DELETE_BY_ID_QUERY = "DELETE FROM film WHERE id = ?";
-    private static final String DELETE_ALL_QUERY = "DELETE FROM film";
-    private static final String DELETE_ALL_LIKE_BY_FILM_ID_QUERY = "DELETE FROM \"like\" WHERE film_id =?";
+    private static final String DELETE_FILM_BY_ID = "DELETE FROM film WHERE id = ?";
+    private static final String DELETE_ALL_FILMS = "DELETE FROM film";
+    private static final String DELETE_ALL_LIKE_BY_FILM_ID = "DELETE FROM \"like\" WHERE film_id =?";
     private static final String DELETE_LIKE_BY_USER_ID_AND_FILM_ID =
             "DELETE FROM \"like\" WHERE user_id = ? AND film_id = ? ";
-    private static final String DELETE_ALL_LIKES_QUERY = "DELETE FROM \"like\" ";
-    private static final String DELETE_ALL_FILM_GENRE_BY_FILM_ID_QUERY = "DELETE FROM film_genre WHERE film_id =?";
-    private static final String DELETE_ALL_FILMS_GENRES_QUERY = "DELETE FROM film_genre ";
-    private static final String DELETE_ALL_FILM_RATING_BY_FILM_ID_QUERY = "DELETE FROM film_rating WHERE film_id =?";
-    private static final String DELETE_ALL_FILMS_RATINGS_QUERY = "DELETE FROM film_rating ";
+    private static final String DELETE_ALL_LIKES = "DELETE FROM \"like\" ";
+    private static final String DELETE_ALL_FILM_GENRE_BY_FILM_ID = "DELETE FROM film_genre WHERE film_id =?";
+    private static final String DELETE_ALL_FILMS_GENRES = "DELETE FROM film_genre ";
+    private static final String DELETE_ALL_FILM_RATING_BY_FILM_ID = "DELETE FROM film_rating WHERE film_id =?";
+    private static final String DELETE_ALL_FILMS_RATINGS = "DELETE FROM film_rating ";
 
 
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
@@ -51,12 +47,12 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Film get(Long id) {
-        return findOne(GET_ONE_QUERY, id);
+        return findOne(GET_ONE, id);
     }
 
     @Override
     public Collection<Film> getAll() {
-        return findMany(GET_ALL_QUERY);
+        return findMany(GET_ALL);
     }
 
     @Override
@@ -80,7 +76,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             film.setId(nextIdByTable("film"));
         }
 
-        insert(INSERT_FILM_QUERY,
+        insert(INSERT_FILM,
                 film.getId(),
                 film.getName(),
                 film.getDescription(),
@@ -90,15 +86,19 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         if (!film.getGenres().isEmpty()) {
             genreId = new HashSet<>(jdbc.queryForList(GET_GENRE_ID_BY_NAME, Long.class, film.getGenres()));
             if (!genreId.isEmpty()) {
+                List<Object[]> batchArgs = new ArrayList<>();
+
                 for (Long id : genreId) {
-                    insert(INSERT_FILM_GENRE_QUERY, film.getId(), id);
+                    batchArgs.add(new Object[]{film.getId(), id});
                 }
+
+                jdbc.batchUpdate(INSERT_FILM_GENRE, batchArgs);
             }
         }
 
         if (film.getRatingMpa() != null) {
             ratingId = jdbc.queryForObject(GET_RATING_ID_BY_NAME, Long.class, film.getRatingMpa().getDbName());
-            insert(INSERT_FILM_RATING_QUERY, film.getId(), ratingId);
+            insert(INSERT_FILM_RATING, film.getId(), ratingId);
         }
 
         return get(film.getId());
@@ -106,7 +106,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Set<Long> addLike(Long filmId, Long userId) {
-        insert(INSERT_LIKE_QUERY, userId, filmId);
+        insert(INSERT_LIKE, userId, filmId);
         return get(filmId).getLikes();
     }
 
@@ -120,7 +120,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         // Если одно из полей isEmpty \ isBlank, значит таково пожелание обновления
 
         // Сам фильм можно сразу обновить
-        update(UPDATE_QUERY,
+        update(UPDATE_FILM,
                 film.getId(),
                 film.getName(),
                 film.getDescription(),
@@ -130,33 +130,41 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
         // Остальные записи в смежных таблицах будто проще удалить и внести новые.
         // Существуют они или нет - не играет большой роли. Если они есть - удалятся, если нет, ничего не произойдёт
-        jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID_QUERY, film.getId());
-        jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID_QUERY, film.getId());
-        jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID_QUERY, film.getId());
+        jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID, film.getId());
+        jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID, film.getId());
+        jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID, film.getId());
 
         if (!likeUserId.isEmpty()) {
+            List<Object[]> batchArgs = new ArrayList<>();
+
             for (Long userLikeId : likeUserId) {
-                insert(INSERT_LIKE_QUERY, userLikeId, film.getId());
+                batchArgs.add(new Object[]{userLikeId, film.getId()});
             }
+
+            jdbc.batchUpdate(INSERT_LIKE, batchArgs);
         }
 
         if (!genreId.isEmpty()) {
+            List<Object[]> batchArgs = new ArrayList<>();
+
             for (Long id : genreId) {
-                insert(INSERT_FILM_GENRE_QUERY, film.getId(), id);
+                batchArgs.add(new Object[]{film.getId(), id});
             }
+
+            jdbc.batchUpdate(INSERT_FILM_GENRE, batchArgs);
         }
 
-        insert(INSERT_FILM_RATING_QUERY, film.getId(), ratingId);
+        insert(INSERT_FILM_RATING, film.getId(), ratingId);
 
         return get(film.getId());
     }
 
     @Override
     public boolean delete(Long id) {
-        boolean deleteFilm = deleteOne(DELETE_BY_ID_QUERY, id);
-        boolean deleteLike = jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID_QUERY, id) > 0;
-        boolean deleteFilmGenre = jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID_QUERY, id) > 0;
-        boolean deleteFilmRating = jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID_QUERY, id) > 0;
+        boolean deleteFilm = deleteOne(DELETE_FILM_BY_ID, id);
+        boolean deleteLike = jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID, id) > 0;
+        boolean deleteFilmGenre = jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID, id) > 0;
+        boolean deleteFilmRating = jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID, id) > 0;
 
         if (!deleteFilm) {
             log.info("Произошла ошибка при удалении записи из таблицы film с id: {}", id);
@@ -180,10 +188,10 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public boolean deleteAll() {
-        boolean deleteFilm = deleteAll(DELETE_ALL_QUERY);
-        boolean deleteLike = jdbc.update(DELETE_ALL_LIKES_QUERY) > 0;
-        boolean deleteFilmGenre = jdbc.update(DELETE_ALL_FILMS_GENRES_QUERY) > 0;
-        boolean deleteFilmRating = jdbc.update(DELETE_ALL_FILMS_RATINGS_QUERY) > 0;
+        boolean deleteFilm = deleteAll(DELETE_ALL_FILMS);
+        boolean deleteLike = jdbc.update(DELETE_ALL_LIKES) > 0;
+        boolean deleteFilmGenre = jdbc.update(DELETE_ALL_FILMS_GENRES) > 0;
+        boolean deleteFilmRating = jdbc.update(DELETE_ALL_FILMS_RATINGS) > 0;
 
         if (!deleteFilm) {
             log.info("Произошла ошибка при удалении всех записей из таблицы film");

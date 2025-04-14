@@ -13,18 +13,18 @@ import java.util.Collection;
 @Slf4j
 @Repository
 public class GenreRepository extends BaseRepository<GenreDto> implements GenreStorage {
-    private static final String GET_ONE_QUERY = "SELECT * FROM genre WHERE id = ?";
-    private static final String GET_ALL_QUERY = "SELECT * FROM genre";
+    private static final String GET_ONE = "SELECT * FROM genre WHERE id = ?";
+    private static final String GET_ALL = "SELECT * FROM genre";
 
-    private static final String INSERT_QUERY = "INSERT INTO genre (id, name) VALUES (?, ?)";
+    private static final String INSERT_GENRE = "INSERT INTO genre (id, name) VALUES (?, ?)";
 
-    private static final String UPDATE_QUERY = "UPDATE genre " +
+    private static final String UPDATE_GENRE = "UPDATE genre " +
             "SET id = ?, name = ? WHERE id = ?";
 
     private static final String DELETE_FILM_GENRE_BY_GENRE_ID = "DELETE FROM film_genre WHERE genre_id = ?";
     private static final String DELETE_FILM_GENRE = "DELETE FROM film_genre";
-    private static final String DELETE_BY_ID_QUERY = "DELETE FROM genre WHERE id = ?";
-    private static final String DELETE_ALL_QUERY = "DELETE FROM genre";
+    private static final String DELETE_GENRE_BY_ID = "DELETE FROM genre WHERE id = ?";
+    private static final String DELETE_ALL_GENRES = "DELETE FROM genre";
 
     public GenreRepository(JdbcTemplate jdbc, RowMapper<GenreDto> mapper) {
         super(jdbc, mapper);
@@ -32,12 +32,12 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
 
     @Override
     public GenreDto get(Long id) {
-        return findOne(GET_ONE_QUERY, id);
+        return findOne(GET_ONE, id);
     }
 
     @Override
     public Collection<GenreDto> getAll() {
-        return findMany(GET_ALL_QUERY);
+        return findMany(GET_ALL);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
             genre.setId(nextIdByTable("genre"));
         }
 
-        insert(INSERT_QUERY,
+        insert(INSERT_GENRE,
                 genre.getId(),
                 genre.getName());
 
@@ -55,7 +55,7 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
 
     @Override
     public GenreDto update(GenreDto genre) {
-        update(UPDATE_QUERY,
+        update(UPDATE_GENRE,
                 genre.getId(),
                 genre.getName());
         return get(genre.getId());
@@ -63,7 +63,7 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
 
     @Override
     public boolean delete(Long id) {
-        boolean deleteGenre = deleteOne(DELETE_BY_ID_QUERY, id);
+        boolean deleteGenre = deleteOne(DELETE_GENRE_BY_ID, id);
         boolean deleteFilmGenre = jdbc.update(DELETE_FILM_GENRE_BY_GENRE_ID, id) > 0;
 
         if (!deleteGenre) {
@@ -82,7 +82,7 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
     @Override
     public boolean deleteAll() {
         // если удалять все жанры, то удалять и все связи фильм-жанр
-        boolean deleteGenre = deleteAll(DELETE_ALL_QUERY);
+        boolean deleteGenre = deleteAll(DELETE_ALL_GENRES);
         boolean deleteFilmGenre = jdbc.update(DELETE_FILM_GENRE) > 0;
 
         if (!deleteGenre) {

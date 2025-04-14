@@ -111,7 +111,7 @@ public class UserService {
         // Проверяем, дружит ли пользователь Б с А
         // Если да, меняем статус дружбы на CONFIRMED и добавляем дружбу с другой стороны.
         try {
-            status = userRepository.getFriendshipStatus(friendId, id);
+            userRepository.getFriendshipStatus(friendId, id);
             status = FriendshipStatus.CONFIRMED;
 
             log.info("В таблице friend изменён статус дружбы между пользователями с id: {} и id: {} на статус {}",
