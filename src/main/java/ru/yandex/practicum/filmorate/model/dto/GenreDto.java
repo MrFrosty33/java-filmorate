@@ -10,6 +10,5 @@ import ru.yandex.practicum.filmorate.model.Genre;
 public class GenreDto {
     @NotNull
     private Long id;
-    @NotNull
     private Genre name;
 }

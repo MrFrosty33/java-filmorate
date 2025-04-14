@@ -10,6 +10,5 @@ import ru.yandex.practicum.filmorate.model.RatingMpa;
 public class RatingMpaDto {
     @NotNull
     private Long id;
-    @NotNull
     private RatingMpa name;
 }

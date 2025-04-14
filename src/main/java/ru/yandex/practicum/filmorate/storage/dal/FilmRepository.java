@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.dto.GenreDto;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
@@ -69,9 +70,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Film add(Film film) {
-        final Long ratingId;
-        final Set<Long> genreId;
-
         if (film.getId() == null) {
             film.setId(nextIdByTable("film"));
         }
@@ -84,21 +82,17 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 film.getDuration());
 
         if (!film.getGenres().isEmpty()) {
-            genreId = new HashSet<>(jdbc.queryForList(GET_GENRE_ID_BY_NAME, Long.class, film.getGenres()));
-            if (!genreId.isEmpty()) {
-                List<Object[]> batchArgs = new ArrayList<>();
+            List<Object[]> batchArgs = new ArrayList<>();
 
-                for (Long id : genreId) {
-                    batchArgs.add(new Object[]{film.getId(), id});
-                }
-
-                jdbc.batchUpdate(INSERT_FILM_GENRE, batchArgs);
+            for (GenreDto genre : film.getGenres()) {
+                batchArgs.add(new Object[]{film.getId(), genre.getId()});
             }
+
+            jdbc.batchUpdate(INSERT_FILM_GENRE, batchArgs);
         }
 
         if (film.getRatingMpa() != null) {
-            ratingId = jdbc.queryForObject(GET_RATING_ID_BY_NAME, Long.class, film.getRatingMpa().getDbName());
-            insert(INSERT_FILM_RATING, film.getId(), ratingId);
+            insert(INSERT_FILM_RATING, film.getId(), film.getRatingMpa());
         }
 
         return get(film.getId());

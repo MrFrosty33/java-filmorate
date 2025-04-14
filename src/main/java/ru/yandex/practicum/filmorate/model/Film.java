@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.annotation.MinLocalDate;
+import ru.yandex.practicum.filmorate.model.dto.GenreDto;
+import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -34,10 +36,9 @@ public class Film {
     @Min(1)
     private long duration;
 
-    // хранит в себе ID пользователей поставихших лайк фильму
     private Set<Long> likes;
-    private Set<Genre> genres;
-    private RatingMpa ratingMpa;
+    private Set<GenreDto> genres;
+    private RatingMpaDto ratingMpa;
 
     public int getRate() {
         return likes.size();
