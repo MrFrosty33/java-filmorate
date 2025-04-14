@@ -4,9 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.dto.GenreDto;
+import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
@@ -18,6 +21,8 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String GET_ALL = "SELECT * FROM film";
     private static final String GET_GENRE_ID_BY_NAME = "SELECT id FROM genre WHERE name in (?)";
     private static final String GET_RATING_ID_BY_NAME = "SELECT id FROM rating WHERE name IN (?)";
+    private static final String GET_ALL_RATING_ID = "SELECT id FROM rating";
+    private static final String GET_ALL_GENRE_ID = "SELECT id FROM genre";
     private static final String GET_POPULAR_ID = "SELECT film_id FROM \"like\" " +
             "GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
 
@@ -53,6 +58,10 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Collection<Film> getAll() {
+        // Этот метод точно работает, как и корректно работает FilmRowMapper
+        // но после попытки добавить фильм он начинает выдавать : "Таблица film пуста".
+        // Что происходит? При том, что данные из таблицы не удаляются, они остаются.
+        // Как он может выдавать подобную ошибку?
         return findMany(GET_ALL);
     }
 
@@ -69,6 +78,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     @Override
+    @Transactional
     public Film add(Film film) {
         if (film.getId() == null) {
             film.setId(nextIdByTable("film"));
@@ -81,18 +91,30 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 film.getReleaseDate(),
                 film.getDuration());
 
-        if (!film.getGenres().isEmpty()) {
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            Set<Long> genreIds = new HashSet<>(jdbc.queryForList(GET_ALL_GENRE_ID, Long.class));
             List<Object[]> batchArgs = new ArrayList<>();
 
             for (GenreDto genre : film.getGenres()) {
-                batchArgs.add(new Object[]{film.getId(), genre.getId()});
+                if (genreIds.contains(genre.getId())) {
+                    batchArgs.add(new Object[]{film.getId(), genre.getId()});
+                } else {
+                    log.info("Попытка добавить несуществующий жанр с id: {}", genre.getId());
+                    throw new NotFoundException("Не найден жанр с id: " + genre.getId());
+                }
             }
 
             jdbc.batchUpdate(INSERT_FILM_GENRE, batchArgs);
         }
 
         if (film.getRatingMpa() != null) {
-            insert(INSERT_FILM_RATING, film.getId(), film.getRatingMpa());
+            Set<Long> ratingIds = new HashSet<>(jdbc.queryForList(GET_ALL_RATING_ID, Long.class));
+            if (ratingIds.contains(film.getRatingMpa().getId())) {
+                insert(INSERT_FILM_RATING, film.getId(), film.getRatingMpa().getId());
+            } else {
+                log.info("Попытка добавить несуществующий рейтинг с id: {}", film.getRatingMpa().getId());
+                throw new NotFoundException("Не найден рейтинг с id: " + film.getRatingMpa().getId());
+            }
         }
 
         return get(film.getId());
@@ -105,13 +127,13 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     @Override
+    @Transactional
     public Film update(Film film) {
-        final Long ratingId = jdbc.queryForObject(GET_RATING_ID_BY_NAME, Long.class, film.getRatingMpa());
-        final Set<Long> genreId =
-                new HashSet<>(jdbc.queryForList(GET_GENRE_ID_BY_NAME, Long.class, film.getGenres()));
-        final Set<Long> likeUserId = film.getLikes();
         // Допустим, переданный нам фильм полностью корректен
         // Если одно из полей isEmpty \ isBlank, значит таково пожелание обновления
+        Set<Long> likes = film.getLikes();
+        Set<GenreDto> genres = film.getGenres();
+        RatingMpaDto rating = film.getRatingMpa();
 
         // Сам фильм можно сразу обновить
         update(UPDATE_FILM,
@@ -128,32 +150,33 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID, film.getId());
         jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID, film.getId());
 
-        if (!likeUserId.isEmpty()) {
+        if (!likes.isEmpty()) {
             List<Object[]> batchArgs = new ArrayList<>();
 
-            for (Long userLikeId : likeUserId) {
+            for (Long userLikeId : likes) {
                 batchArgs.add(new Object[]{userLikeId, film.getId()});
             }
 
             jdbc.batchUpdate(INSERT_LIKE, batchArgs);
         }
 
-        if (!genreId.isEmpty()) {
+        if (!genres.isEmpty()) {
             List<Object[]> batchArgs = new ArrayList<>();
 
-            for (Long id : genreId) {
-                batchArgs.add(new Object[]{film.getId(), id});
+            for (GenreDto genre : genres) {
+                batchArgs.add(new Object[]{film.getId(), genre.getId()});
             }
 
             jdbc.batchUpdate(INSERT_FILM_GENRE, batchArgs);
         }
 
-        insert(INSERT_FILM_RATING, film.getId(), ratingId);
+        insert(INSERT_FILM_RATING, film.getId(), rating.getId());
 
         return get(film.getId());
     }
 
     @Override
+    @Transactional
     public boolean delete(Long id) {
         boolean deleteFilm = deleteOne(DELETE_FILM_BY_ID, id);
         boolean deleteLike = jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID, id) > 0;
@@ -181,6 +204,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     @Override
+    @Transactional
     public boolean deleteAll() {
         boolean deleteFilm = deleteAll(DELETE_ALL_FILMS);
         boolean deleteLike = jdbc.update(DELETE_ALL_LIKES) > 0;

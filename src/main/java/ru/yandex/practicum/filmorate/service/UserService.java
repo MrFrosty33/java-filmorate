@@ -97,6 +97,13 @@ public class UserService {
     public User addFriend(Long id, Long friendId) {
         // если А дружит с Б, то пока Б не отправил запрос к А, статус дружбы UNCONFIRMED
         FriendshipStatus status;
+        validateUserExists(Optional.of(id),
+                new NotFoundException("Не существует пользователь с id: " + id),
+                "Попытка добавить друга к несуществующему пользователю с id:  " + id);
+
+        validateUserExists(Optional.of(friendId),
+                new NotFoundException("Не существует пользователь с id: " + friendId),
+                "Попытка в друзья несуществующего пользователя с id:  " + friendId);
 
         if (id.equals(friendId)) {
             log.info("Попытка добавить самого себя в друзья");
@@ -170,7 +177,8 @@ public class UserService {
 
         if (!getAllFriends(id).contains(get(friendId))) {
             log.info("Попытка удалить из друзей несуществующего друга с id: {}", friendId);
-            throw new NotFoundException("У пользователя с id: " + id + " нет друга с id: " + friendId);
+            return;
+            //throw new NotFoundException("У пользователя с id: " + id + " нет друга с id: " + friendId);
         }
 
         userRepository.deleteFriend(id, friendId);

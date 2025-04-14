@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -38,6 +39,7 @@ public class Film {
 
     private Set<Long> likes;
     private Set<GenreDto> genres;
+    @JsonProperty("mpa")
     private RatingMpaDto ratingMpa;
 
     public int getRate() {
