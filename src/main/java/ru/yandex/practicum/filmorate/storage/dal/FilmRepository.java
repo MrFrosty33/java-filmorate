@@ -58,10 +58,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Collection<Film> getAll() {
-        // Этот метод точно работает, как и корректно работает FilmRowMapper
-        // но после попытки добавить фильм он начинает выдавать : "Таблица film пуста".
-        // Что происходит? При том, что данные из таблицы не удаляются, они остаются.
-        // Как он может выдавать подобную ошибку?
         return findMany(GET_ALL);
     }
 
