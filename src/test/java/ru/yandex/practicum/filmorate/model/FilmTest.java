@@ -6,6 +6,7 @@ import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -20,7 +21,7 @@ public class FilmTest {
             .duration(148)
             .likes(new HashSet<>())
             .genres(new HashSet<>())
-            .ratingMpa(RatingMpa.R)
+            .ratingMpa(RatingMpaDto.builder().name(RatingMpa.R).id(4L).build())
             .build();
 
     @BeforeEach
