@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.annotation.NoSpaces;
 
 import java.time.LocalDate;
 import java.util.Map;
-import java.util.Set;
 
 @Builder(toBuilder = true)
 @Data
@@ -32,11 +31,6 @@ public class User {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
 
-    // висит до тех пор, пока логика во всех методах не переделана под мапу
-    // TODO упразднить
-    private Set<Long> friends;
-
     // Хранит в себе ID друга и статус их дружбы.
-    // TODO логика
     private Map<Long, FriendshipStatus> friendStatusMap;
 }

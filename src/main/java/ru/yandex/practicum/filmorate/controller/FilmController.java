@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -9,14 +10,10 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import java.util.Collection;
 
 @RestController
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 @RequestMapping("/films")
 public class FilmController {
     private final FilmService filmService;
-
-    @Autowired
-    public FilmController(FilmService filmService) {
-        this.filmService = filmService;
-    }
 
     @GetMapping("/{id}")
     public Film get(@PathVariable Long id) {
