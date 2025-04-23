@@ -57,7 +57,8 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
     public GenreDto update(GenreDto genre) {
         update(UPDATE_GENRE,
                 genre.getId(),
-                genre.getName());
+                genre.getName(),
+                genre.getId());
         return get(genre.getId());
     }
 

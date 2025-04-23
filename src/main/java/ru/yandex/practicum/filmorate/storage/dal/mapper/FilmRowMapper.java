@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.RatingMpa;
@@ -13,6 +14,7 @@ import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -34,6 +36,7 @@ public class FilmRowMapper implements RowMapper<Film> {
                 .likes(getLikes(film.getId()))
                 .genres(getGenres(film.getId()))
                 .ratingMpa(getRating(film.getId()))
+                .directors(getDirectors(film.getId()))
                 .build();
         return film;
     }
@@ -77,6 +80,25 @@ public class FilmRowMapper implements RowMapper<Film> {
                             .build(),
                     id
             );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    private Set<Director> getDirectors(long id){
+        String stm = "SELECT d.id AS id, d.name AS name " +
+                "FROM film f " +
+                "INNER JOIN film_director fd ON f.id = fd.film_id INNER JOIN director d ON d.id = fd.director_id " +
+                "WHERE f.id = ?";
+
+        try {
+            return new HashSet<>(jdbc.query(stm,
+                    (rs, rowNum) -> Director.builder()
+                            .id(rs.getLong("id"))
+                            .name(rs.getString("name"))
+                            .build(),
+                    id
+            ));
         } catch (EmptyResultDataAccessException e) {
             return null;
         }

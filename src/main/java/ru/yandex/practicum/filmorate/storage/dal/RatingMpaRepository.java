@@ -57,7 +57,8 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
     public RatingMpaDto update(RatingMpaDto rating) {
         update(UPDATE_RATING,
                 rating.getId(),
-                rating.getName().getDbName());
+                rating.getName().getDbName(),
+                rating.getId());
         return get(rating.getId());
     }
 

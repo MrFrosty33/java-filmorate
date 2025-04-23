@@ -41,6 +41,7 @@ public class Film {
     private Set<GenreDto> genres;
     @JsonProperty("mpa")
     private RatingMpaDto ratingMpa;
+    private Set<Director> directors;
 
     public int getRate() {
         return likes.size();

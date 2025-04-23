@@ -28,4 +28,9 @@ public class MapperConfig {
     public RatingMpaDtoRowMapper ratingMpaDtoRowMapper(JdbcTemplate jdbc) {
         return new RatingMpaDtoRowMapper(jdbc);
     }
+
+    @Bean
+    public DirectorRowMapper directorRowMapper() {
+        return new DirectorRowMapper();
+    }
 }
