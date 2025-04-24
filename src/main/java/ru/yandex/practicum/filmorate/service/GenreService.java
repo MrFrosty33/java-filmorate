@@ -48,9 +48,9 @@ public class GenreService {
                 new NotFoundException("Жанр с id: " + id + " не существует"),
                 "Попытка обновить несуществующий жанр с id: " + id);
 
+        genre = genreRepository.update(genre);
         log.info("Был обновлён жанр с id: {}", id);
-        genreRepository.update(genre);
-        return genreRepository.get(id);
+        return genre;
     }
 
     public void delete(Long id) {

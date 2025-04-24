@@ -88,9 +88,9 @@ public class UserService {
             throw new ConflictException("Новый пользователь не может иметь друзей");
         }
 
-        userRepository.add(user);
+        user = userRepository.add(user);
         log.info("Был добавлен пользователь с id: {}", user.getId());
-        return userRepository.get(user.getId());
+        return user;
     }
 
     // Стоит возвращать целиком пользователя, или же только статус дружбы, полученный в ходе выполнения метода?
@@ -147,9 +147,9 @@ public class UserService {
             user.setFriendStatusMap(new HashMap<>());
         }
 
-        userRepository.update(user);
+        user = userRepository.update(user);
         log.info("Был обновлён пользователь с id: {}", id);
-        return userRepository.get(id);
+         return user;
     }
 
     public User update(Long id, User user) {

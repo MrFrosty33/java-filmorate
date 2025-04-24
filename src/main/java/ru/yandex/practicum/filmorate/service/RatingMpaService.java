@@ -48,9 +48,9 @@ public class RatingMpaService {
                 new NotFoundException("Рейтинг с id: " + id + " не существует"),
                 "Попытка обновить несуществующий рейтинг с id: " + id);
 
+        rating = ratingMpaRepository.update(rating);
         log.info("Был обновлён рейтинг с id: {}", id);
-        ratingMpaRepository.update(rating);
-        return ratingMpaRepository.get(id);
+        return rating;
     }
 
     public void delete(Long id) {

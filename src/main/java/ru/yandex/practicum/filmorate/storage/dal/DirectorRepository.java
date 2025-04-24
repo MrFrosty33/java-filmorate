@@ -64,8 +64,8 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
 
     @Override
     public boolean delete(Long id) {
-        boolean deleteDirector = deleteOne(DELETE_DIRECTOR_BY_ID, id);
         boolean deleteFilmDirector = jdbc.update(DELETE_FILM_DIRECTOR_BY_DIRECTOR_ID, id) > 0;
+        boolean deleteDirector = deleteOne(DELETE_DIRECTOR_BY_ID, id);
 
         if (!deleteDirector) {
             log.info("Произошла ошибка при удалении записи из таблицы director с id: {}", id);
@@ -82,8 +82,8 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
 
     @Override
     public boolean deleteAll() {
-        boolean deleteDirector = deleteAll(DELETE_ALL_DIRECTORS);
         boolean deleteFilmDirector = jdbc.update(DELETE_FILM_DIRECTOR) > 0;
+        boolean deleteDirector = deleteAll(DELETE_ALL_DIRECTORS);
 
         if (!deleteDirector) {
             log.info("Произошла ошибка при удалении всех записей из таблицы director");

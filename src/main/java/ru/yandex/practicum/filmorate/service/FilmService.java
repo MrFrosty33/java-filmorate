@@ -99,9 +99,9 @@ public class FilmService {
             film.setGenres(new HashSet<>());
         }
 
+        film = filmRepository.update(film);
         log.info("Был обновлён фильм с id: {}", id);
-        filmRepository.update(film);
-        return filmRepository.get(id);
+        return film;
     }
 
     // В репозитории оставил один метод update(Film film)
