@@ -17,7 +17,7 @@ import java.util.*;
 @Slf4j
 @Repository
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
-    private static final String GET_ONE = "SELECT * FROM film WHERE id = ?";
+    private static final String GET_ONE = "SELECT * FROM film WHERE id IN (?)";
     private static final String GET_ALL = "SELECT * FROM film";
     private static final String GET_GENRE_ID_BY_NAME = "SELECT id FROM genre WHERE name in (?)";
     private static final String GET_RATING_ID_BY_NAME = "SELECT id FROM rating WHERE name IN (?)";
@@ -25,6 +25,16 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String GET_ALL_GENRE_ID = "SELECT id FROM genre";
     private static final String GET_POPULAR_ID = "SELECT film_id FROM \"like\" " +
             "GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
+
+    // какой порядок, ASC \ DESC?
+    private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_YEAR = "SELECT f.id FROM film f " +
+            "INNER JOIN film_director fd ON fd.film_id = f.id " +
+            "WHERE fd.director_id = ? ORDER BY EXTRACT(YEAR FROM f.release_date) DESC";
+    private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_LIKES = "SELECT f.id FROM film f " +
+            "INNER JOIN film_director fd ON fd.film_id = f.id " +
+            "LEFT JOIN \"like\" l ON l.film_id = f.id " +
+            "WHERE fd.director_id = ? " +
+            "GROUP BY f.id ORDER BY COUNT(l.user_id) DESC";
 
     private static final String INSERT_FILM = "INSERT INTO film (id, name, description, release_date, duration)" +
             " VALUES (?, ?, ?, ?, ?)";
@@ -67,6 +77,24 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         Collection<Film> result = new ArrayList<>();
 
         for (Long id : popularIds) {
+            result.add(get(id));
+        }
+
+        return result;
+    }
+
+    @Override
+    public Collection<Film> getByDirector(Long directorId, String sortBy) {
+        Collection<Long> filmIds = switch (sortBy) {
+            case "year" -> jdbc.queryForList(GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_YEAR, Long.class, directorId);
+            case "likes" -> jdbc.queryForList(GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_LIKES, Long.class, directorId);
+            default -> new ArrayList<>();
+            // default недостижим, отлавливаются иные методы в Service
+        };
+
+        Collection<Film> result = new ArrayList<>();
+
+        for (Long id : filmIds) {
             result.add(get(id));
         }
 

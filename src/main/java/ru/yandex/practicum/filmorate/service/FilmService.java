@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.BadRequestParamException;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
@@ -22,6 +23,7 @@ import java.util.Set;
 public class FilmService {
     private final FilmRepository filmRepository;
     private final UserService userService;
+    private final DirectorService directorService;
 
     public Film get(Long id) {
         validateFilmExists(Optional.of(id),
@@ -53,6 +55,22 @@ public class FilmService {
 
         Collection<Film> result = filmRepository.getPopular(limit);
         log.info("Получен список из {} наиболее популярных фильмов", result.size());
+        return result;
+    }
+
+    public Collection<Film> getByDirector(Long directorId, String sortBy) {
+        Director director = directorService.get(directorId);
+        Collection<Film> result;
+
+        switch (sortBy) {
+            case "year", "likes" -> result = filmRepository.getByDirector(directorId, sortBy);
+            default -> {
+                log.info("Попытка получить список фильмов по режиссёру с sortBy = {}", sortBy);
+                throw new BadRequestParamException("Был передан sortBy с неподдерживаемым типом сортировки: " + sortBy +
+                        ". Поддерживаются только year, likes");
+            }
+        }
+
         return result;
     }
 
