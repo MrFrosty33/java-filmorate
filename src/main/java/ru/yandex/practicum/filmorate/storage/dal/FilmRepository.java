@@ -27,16 +27,14 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String GET_ALL_DIRECTOR_ID = "SELECT id FROM director";
     private static final String GET_POPULAR_ID = "SELECT film_id FROM \"like\" " +
             "GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
-
-    // какой порядок, ASC \ DESC?
     private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_YEAR = "SELECT f.id FROM film f " +
             "INNER JOIN film_director fd ON fd.film_id = f.id " +
-            "WHERE fd.director_id = ? ORDER BY EXTRACT(YEAR FROM f.release_date) DESC";
+            "WHERE fd.director_id = ? ORDER BY EXTRACT(YEAR FROM f.release_date)";
     private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_LIKES = "SELECT f.id FROM film f " +
             "INNER JOIN film_director fd ON fd.film_id = f.id " +
             "LEFT JOIN \"like\" l ON l.film_id = f.id " +
             "WHERE fd.director_id = ? " +
-            "GROUP BY f.id ORDER BY COUNT(l.user_id) DESC";
+            "GROUP BY f.id ORDER BY COUNT(l.user_id)";
 
     private static final String INSERT_FILM = "INSERT INTO film (id, name, description, release_date, duration)" +
             " VALUES (?, ?, ?, ?, ?)";
