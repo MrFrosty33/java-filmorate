@@ -83,6 +83,10 @@ public class FilmService {
             film.setGenres(new HashSet<>());
         }
 
+        if (film.getDirectors() == null) {
+            film.setDirectors(new HashSet<>());
+        }
+
         if (!film.getLikes().isEmpty()) {
             log.info("Попытка добавить новый фильм с уже поставленными ему лайками");
             throw new ConflictException("Новый фильм не может содержать лайки");
@@ -115,6 +119,10 @@ public class FilmService {
 
         if (film.getGenres() == null) {
             film.setGenres(new HashSet<>());
+        }
+
+        if (film.getDirectors() == null) {
+            film.setDirectors(new HashSet<>());
         }
 
         film = filmRepository.update(film);
