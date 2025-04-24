@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.dal.DirectorRepository;
@@ -54,7 +55,7 @@ public class DirectorService {
 
     public void delete(Long id) {
         validateDirectorExists(Optional.of(id),
-                new NotFoundException("Режиссёр с id: " + id + " не существует"),
+                new InternalServerException("Режиссёр с id: " + id + " не существует"),
                 "Попытка удалить несуществующего режиссёра с id: " + id);
 
         directorRepository.delete(id);
@@ -63,7 +64,7 @@ public class DirectorService {
 
     public void deleteAll() {
         validateDirectorExists(Optional.empty(),
-                new NotFoundException("Таблица director пуста"),
+                new InternalServerException("Таблица director пуста"),
                 "Попытка очистить таблицу director, которая и так пуста");
 
         directorRepository.deleteAll();
