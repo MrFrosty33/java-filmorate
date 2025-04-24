@@ -205,7 +205,7 @@ public class UserService {
                 }
             } else {
                 Optional<Collection<User>> result = Optional.ofNullable(userRepository.getAll());
-                if (result.isEmpty()) {
+                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }

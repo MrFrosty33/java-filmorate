@@ -174,10 +174,10 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     @Override
     @Transactional
     public boolean delete(Long id) {
-        boolean deleteFilm = deleteOne(DELETE_FILM_BY_ID, id);
         boolean deleteLike = jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID, id) > 0;
         boolean deleteFilmGenre = jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID, id) > 0;
         boolean deleteFilmRating = jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID, id) > 0;
+        boolean deleteFilm = deleteOne(DELETE_FILM_BY_ID, id);
 
         if (!deleteFilm) {
             log.info("Произошла ошибка при удалении записи из таблицы film с id: {}", id);
@@ -202,10 +202,10 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     @Override
     @Transactional
     public boolean deleteAll() {
-        boolean deleteFilm = deleteAll(DELETE_ALL_FILMS);
         boolean deleteLike = jdbc.update(DELETE_ALL_LIKES) > 0;
         boolean deleteFilmGenre = jdbc.update(DELETE_ALL_FILMS_GENRES) > 0;
         boolean deleteFilmRating = jdbc.update(DELETE_ALL_FILMS_RATINGS) > 0;
+        boolean deleteFilm = deleteAll(DELETE_ALL_FILMS);
 
         if (!deleteFilm) {
             log.info("Произошла ошибка при удалении всех записей из таблицы film");

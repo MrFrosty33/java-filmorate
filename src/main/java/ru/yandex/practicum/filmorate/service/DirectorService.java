@@ -81,7 +81,7 @@ public class DirectorService {
                 }
             } else {
                 Optional<Collection<Director>> result = Optional.ofNullable(directorRepository.getAll());
-                if (result.isEmpty()) {
+                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }

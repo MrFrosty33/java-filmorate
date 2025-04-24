@@ -82,7 +82,7 @@ public class RatingMpaService {
                 }
             } else {
                 Optional<Collection<RatingMpaDto>> result = Optional.ofNullable(ratingMpaRepository.getAll());
-                if (result.isEmpty()) {
+                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }

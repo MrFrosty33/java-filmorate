@@ -155,7 +155,7 @@ public class FilmService {
                 }
             } else {
                 Optional<Collection<Film>> result = Optional.ofNullable(filmRepository.getAll());
-                if (result.isEmpty()) {
+                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }

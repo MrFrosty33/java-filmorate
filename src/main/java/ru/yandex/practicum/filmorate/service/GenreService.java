@@ -82,7 +82,7 @@ public class GenreService {
                 }
             } else {
                 Optional<Collection<GenreDto>> result = Optional.ofNullable(genreRepository.getAll());
-                if (result.isEmpty()) {
+                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }
