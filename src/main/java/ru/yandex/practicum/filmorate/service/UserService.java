@@ -149,7 +149,7 @@ public class UserService {
 
         user = userRepository.update(user);
         log.info("Был обновлён пользователь с id: {}", id);
-         return user;
+        return user;
     }
 
     public User update(Long id, User user) {

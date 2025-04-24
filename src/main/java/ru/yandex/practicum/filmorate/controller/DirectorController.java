@@ -16,12 +16,12 @@ public class DirectorController {
     private final DirectorService directorService;
 
     @GetMapping("/{id}")
-    public Director get(@PathVariable Long id){
+    public Director get(@PathVariable Long id) {
         return directorService.get(id);
     }
 
     @GetMapping
-    public Collection<Director> getAll(){
+    public Collection<Director> getAll() {
         return directorService.getAll();
     }
 
