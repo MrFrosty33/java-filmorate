@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.dto.GenreDto;
 import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
@@ -23,6 +24,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String GET_RATING_ID_BY_NAME = "SELECT id FROM rating WHERE name IN (?)";
     private static final String GET_ALL_RATING_ID = "SELECT id FROM rating";
     private static final String GET_ALL_GENRE_ID = "SELECT id FROM genre";
+    private static final String GET_ALL_DIRECTOR_ID = "SELECT id FROM director";
     private static final String GET_POPULAR_ID = "SELECT film_id FROM \"like\" " +
             "GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
 
@@ -40,6 +42,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             " VALUES (?, ?, ?, ?, ?)";
     private static final String INSERT_LIKE = "INSERT INTO \"like\" (user_id, film_id) VALUES (?, ?)";
     private static final String INSERT_FILM_GENRE = "INSERT INTO film_genre (film_id, genre_id) VALUES (?,?)";
+    private static final String INSERT_FILM_DIRECTOR = "INSERT INTO film_director (film_id, director_id) VALUES (?,?)";
     private static final String INSERT_FILM_RATING = "INSERT INTO film_rating (film_id, rating_id) VALUES (?,?)";
 
     private static final String UPDATE_FILM = "UPDATE film " +
@@ -52,6 +55,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             "DELETE FROM \"like\" WHERE user_id = ? AND film_id = ? ";
     private static final String DELETE_ALL_LIKES = "DELETE FROM \"like\" ";
     private static final String DELETE_ALL_FILM_GENRE_BY_FILM_ID = "DELETE FROM film_genre WHERE film_id =?";
+    private static final String DELETE_ALL_FILM_DIRECTOR_BY_FILM_ID = "DELETE FROM film_director WHERE film_id =?";
     private static final String DELETE_ALL_FILMS_GENRES = "DELETE FROM film_genre ";
     private static final String DELETE_ALL_FILM_RATING_BY_FILM_ID = "DELETE FROM film_rating WHERE film_id =?";
     private static final String DELETE_ALL_FILMS_RATINGS = "DELETE FROM film_rating ";
@@ -131,6 +135,22 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             jdbc.batchUpdate(INSERT_FILM_GENRE, batchArgs);
         }
 
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            Set<Long> directorIds = new HashSet<>(jdbc.queryForList(GET_ALL_DIRECTOR_ID, Long.class));
+            List<Object[]> batchArgs = new ArrayList<>();
+
+            for (Director director : film.getDirectors()) {
+                if (directorIds.contains(director.getId())) {
+                    batchArgs.add(new Object[]{film.getId(), director.getId()});
+                } else {
+                    log.info("Попытка добавить несуществующего режиссёра с id: {}", director.getId());
+                    throw new NotFoundException("Не найден режиссёр с id: " + director.getId());
+                }
+            }
+
+            jdbc.batchUpdate(INSERT_FILM_DIRECTOR, batchArgs);
+        }
+
         if (film.getRatingMpa() != null) {
             Set<Long> ratingIds = new HashSet<>(jdbc.queryForList(GET_ALL_RATING_ID, Long.class));
             if (ratingIds.contains(film.getRatingMpa().getId())) {
@@ -157,6 +177,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         // Если одно из полей isEmpty \ isBlank, значит таково пожелание обновления
         Set<Long> likes = film.getLikes();
         Set<GenreDto> genres = film.getGenres();
+        Set<Director> directors = film.getDirectors();
         RatingMpaDto rating = film.getRatingMpa();
 
         // Сам фильм можно сразу обновить
@@ -172,6 +193,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         // Существуют они или нет - не играет большой роли. Если они есть - удалятся, если нет, ничего не произойдёт
         jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID, film.getId());
         jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID, film.getId());
+        jdbc.update(DELETE_ALL_FILM_DIRECTOR_BY_FILM_ID, film.getId());
         jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID, film.getId());
 
         if (!likes.isEmpty()) {
@@ -194,6 +216,16 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             jdbc.batchUpdate(INSERT_FILM_GENRE, batchArgs);
         }
 
+        if (!directors.isEmpty()) {
+            List<Object[]> batchArgs = new ArrayList<>();
+
+            for (Director director : directors) {
+                batchArgs.add(new Object[]{film.getId(), director.getId()});
+            }
+
+            jdbc.batchUpdate(INSERT_FILM_DIRECTOR, batchArgs);
+        }
+
         insert(INSERT_FILM_RATING, film.getId(), rating.getId());
 
         return get(film.getId());
@@ -211,18 +243,18 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             log.info("Произошла ошибка при удалении записи из таблицы film с id: {}", id);
             throw new InternalServerException("Произошла ошибка при удалении фильма с id: " + id);
         }
-        if (!deleteLike) {
-            log.info("Произошла ошибка при удалении записи из таблицы like с film_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении лайка у фильма с id: " + id);
-        }
-        if (!deleteFilmGenre) {
-            log.info("Произошла ошибка при удалении записи из таблицы film_genre с film_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении жанра у фильма с id: " + id);
-        }
-        if (!deleteFilmRating) {
-            log.info("Произошла ошибка при удалении записи из таблицы film_rating с film_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении рейтинга фильма с id: " + id);
-        }
+//        if (!deleteLike) {
+//            log.info("Произошла ошибка при удалении записи из таблицы like с film_id: {}", id);
+//            throw new InternalServerException("Произошла ошибка при удалении лайка у фильма с id: " + id);
+//        }
+//        if (!deleteFilmGenre) {
+//            log.info("Произошла ошибка при удалении записи из таблицы film_genre с film_id: {}", id);
+//            throw new InternalServerException("Произошла ошибка при удалении жанра у фильма с id: " + id);
+//        }
+//        if (!deleteFilmRating) {
+//            log.info("Произошла ошибка при удалении записи из таблицы film_rating с film_id: {}", id);
+//            throw new InternalServerException("Произошла ошибка при удалении рейтинга фильма с id: " + id);
+//        }
 
         return true;
     }
@@ -239,18 +271,18 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             log.info("Произошла ошибка при удалении всех записей из таблицы film");
             throw new InternalServerException("Произошла ошибка при очистке таблицы фильмов");
         }
-        if (!deleteLike) {
-            log.info("Произошла ошибка при удалении всех записей из таблицы like");
-            throw new InternalServerException("Произошла ошибка при очистке таблицы лайков");
-        }
-        if (!deleteFilmGenre) {
-            log.info("Произошла ошибка при удалении всех записей из таблицы film_genre");
-            throw new InternalServerException("Произошла ошибка при очистке таблицы жанров");
-        }
-        if (!deleteFilmRating) {
-            log.info("Произошла ошибка при удалении всех записей из таблицы film_rating");
-            throw new InternalServerException("Произошла ошибка при очистке таблицы рейтингов");
-        }
+//        if (!deleteLike) {
+//            log.info("Произошла ошибка при удалении всех записей из таблицы like");
+//            throw new InternalServerException("Произошла ошибка при очистке таблицы лайков");
+//        }
+//        if (!deleteFilmGenre) {
+//            log.info("Произошла ошибка при удалении всех записей из таблицы film_genre");
+//            throw new InternalServerException("Произошла ошибка при очистке таблицы жанров");
+//        }
+//        if (!deleteFilmRating) {
+//            log.info("Произошла ошибка при удалении всех записей из таблицы film_rating");
+//            throw new InternalServerException("Произошла ошибка при очистке таблицы рейтингов");
+//        }
 
         return true;
     }

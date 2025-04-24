@@ -189,10 +189,10 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             log.info("Произошла ошибка при удалении записи из таблицы user с id: {}", id);
             throw new InternalServerException("Произошла ошибка при удалении записи из таблицы user с id: " + id);
         }
-        if (!deleteFriend) {
-            log.info("Произошла ошибка при удалении записи из таблицы friend с user_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении записи из таблицы friend с user_id: " + id);
-        }
+//        if (!deleteFriend) {
+//            log.info("Произошла ошибка при удалении записи из таблицы friend с user_id: {}", id);
+//            throw new InternalServerException("Произошла ошибка при удалении записи из таблицы friend с user_id: " + id);
+//        }
 
         return true;
     }
@@ -207,10 +207,10 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             log.info("Произошла ошибка при удалении всех записей из таблицы user");
             throw new InternalServerException("Произошла ошибка при очистке таблицы user");
         }
-        if (!deleteFriend) {
-            log.info("Произошла ошибка при удалении всех записей из таблицы friend");
-            throw new InternalServerException("Произошла ошибка при очистке таблицы friend");
-        }
+//        if (!deleteFriend) {
+//            log.info("Произошла ошибка при удалении всех записей из таблицы friend");
+//            throw new InternalServerException("Произошла ошибка при очистке таблицы friend");
+//        }
 
         return true;
     }

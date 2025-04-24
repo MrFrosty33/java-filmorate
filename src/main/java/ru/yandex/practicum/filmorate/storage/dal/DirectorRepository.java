@@ -72,10 +72,14 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
             throw new InternalServerException("Произошла ошибка при удалении режиссёра с id: " + id);
         }
 
-        if (!deleteFilmDirector) {
-            log.info("Произошла ошибка при удалении записей из таблицы film_director с director_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении связи film_director с director_id: " + id);
-        }
+        // это не ошибка. Если в таблице нет таких упоминаний, вернёт 0 и будет false
+        // однако это может означать, что у режиссёра просто ещё нет фильмов.
+        // стоит ли вообще подобные методы переутруждать проверкой такой?
+        // или же просто пытаться удалить, если удалится что-то - хорошо, если нет, то и не было записей значит?
+//        if (!deleteFilmDirector) {
+//            log.info("Произошла ошибка при удалении записей из таблицы film_director с director_id: {}", id);
+//            throw new InternalServerException("Произошла ошибка при удалении связи film_director с director_id: " + id);
+//        }
 
         return true;
     }

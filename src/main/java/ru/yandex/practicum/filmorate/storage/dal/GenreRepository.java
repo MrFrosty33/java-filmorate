@@ -72,10 +72,10 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
             throw new InternalServerException("Произошла ошибка при удалении жанра с id: " + id);
         }
 
-        if (!deleteFilmGenre) {
-            log.info("Произошла ошибка при удалении записей из таблицы film_genre с genre_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении связи film_genre с genre_id: " + id);
-        }
+//        if (!deleteFilmGenre) {
+//            log.info("Произошла ошибка при удалении записей из таблицы film_genre с genre_id: {}", id);
+//            throw new InternalServerException("Произошла ошибка при удалении связи film_genre с genre_id: " + id);
+//        }
 
         return true;
     }

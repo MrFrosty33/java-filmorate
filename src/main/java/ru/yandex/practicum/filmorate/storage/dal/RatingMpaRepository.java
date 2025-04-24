@@ -72,10 +72,10 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
             throw new InternalServerException("Произошла ошибка при удалении рейтинга с id: " + id);
         }
 
-        if (!deleteFilmRating) {
-            log.info("Произошла ошибка при удалении записей из таблицы film_rating с rating_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении связи film_rating с rating_id: " + id);
-        }
+//        if (!deleteFilmRating) {
+//            log.info("Произошла ошибка при удалении записей из таблицы film_rating с rating_id: {}", id);
+//            throw new InternalServerException("Произошла ошибка при удалении связи film_rating с rating_id: " + id);
+//        }
 
         return true;
     }
