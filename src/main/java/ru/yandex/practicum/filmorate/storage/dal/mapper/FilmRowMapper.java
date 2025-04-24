@@ -85,7 +85,7 @@ public class FilmRowMapper implements RowMapper<Film> {
         }
     }
 
-    private Set<Director> getDirectors(long id){
+    private Set<Director> getDirectors(long id) {
         String stm = "SELECT d.id AS id, d.name AS name " +
                 "FROM film f " +
                 "INNER JOIN film_director fd ON f.id = fd.film_id INNER JOIN director d ON d.id = fd.director_id " +
