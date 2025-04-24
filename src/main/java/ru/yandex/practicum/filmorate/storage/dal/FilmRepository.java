@@ -34,7 +34,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             "INNER JOIN film_director fd ON fd.film_id = f.id " +
             "LEFT JOIN \"like\" l ON l.film_id = f.id " +
             "WHERE fd.director_id = ? " +
-            "GROUP BY f.id ORDER BY COUNT(l.user_id)";
+            "GROUP BY f.id ORDER BY COUNT(l.user_id) DESC";
 
     private static final String INSERT_FILM = "INSERT INTO film (id, name, description, release_date, duration)" +
             " VALUES (?, ?, ?, ?, ?)";
