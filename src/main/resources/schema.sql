@@ -1,11 +1,14 @@
--- Стоит ли дополнительно добавлять NOT NULL? В логике приложения все эти случаи обрабатываются,
--- не должно возникнуть случая, когда будут переданы некорректные данные в БД.
 CREATE TABLE IF NOT EXISTS genre (
     id BIGINT  PRIMARY KEY,
     name VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS rating (
+    id BIGINT  PRIMARY KEY,
+    name VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS director (
     id BIGINT  PRIMARY KEY,
     name VARCHAR
 );
@@ -23,8 +26,6 @@ CREATE TABLE IF NOT EXISTS friendship_status (
     name VARCHAR DEFAULT 'unconfirmed'
 );
 
--- Стоит ли делать поля email & login UNIQUE?
--- На данный момент логика приложения позволяет добавлять одинаковые e-mail & login
 CREATE TABLE IF NOT EXISTS "user" (
     id BIGINT PRIMARY KEY,
     email VARCHAR,
@@ -45,10 +46,16 @@ CREATE TABLE IF NOT EXISTS film_rating (
     PRIMARY KEY (film_id, rating_id)
 );
 
+CREATE TABLE IF NOT EXISTS film_director (
+    film_id BIGINT REFERENCES film(id) ON DELETE CASCADE,
+    director_id BIGINT REFERENCES director(id) ON DELETE CASCADE,
+    PRIMARY KEY (film_id, director_id)
+);
+
 CREATE TABLE IF NOT EXISTS "friend" (
     user_id BIGINT REFERENCES "user"(id) ON DELETE CASCADE,
     friend_id BIGINT REFERENCES "user"(id) ON DELETE CASCADE,
-    friendship_status_id INTEGER REFERENCES friendship_status(id),
+    friendship_status_id BIGINT REFERENCES friendship_status(id),
     PRIMARY KEY (user_id, friend_id)
 );
 

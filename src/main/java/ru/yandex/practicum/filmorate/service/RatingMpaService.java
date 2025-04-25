@@ -48,9 +48,9 @@ public class RatingMpaService {
                 new NotFoundException("Рейтинг с id: " + id + " не существует"),
                 "Попытка обновить несуществующий рейтинг с id: " + id);
 
+        rating = ratingMpaRepository.update(rating);
         log.info("Был обновлён рейтинг с id: {}", id);
-        ratingMpaRepository.update(rating);
-        return ratingMpaRepository.get(id);
+        return rating;
     }
 
     public void delete(Long id) {
@@ -82,7 +82,7 @@ public class RatingMpaService {
                 }
             } else {
                 Optional<Collection<RatingMpaDto>> result = Optional.ofNullable(ratingMpaRepository.getAll());
-                if (result.isEmpty()) {
+                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }

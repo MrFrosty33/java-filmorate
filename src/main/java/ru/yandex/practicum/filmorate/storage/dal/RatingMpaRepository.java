@@ -19,7 +19,7 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
     private static final String INSERT_RATING = "INSERT INTO rating (id, name) VALUES (?, ?)";
 
     private static final String UPDATE_RATING = "UPDATE rating " +
-            "SET id = ?, name = ? WHERE id = ?";
+            "SET name = ? WHERE id = ?";
 
     private static final String DELETE_FILM_RATING_BY_RATING_ID = "DELETE FROM film_rating WHERE rating_id = ?";
     private static final String DELETE_FILM_RATING = "DELETE FROM film_rating";
@@ -56,8 +56,8 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
     @Override
     public RatingMpaDto update(RatingMpaDto rating) {
         update(UPDATE_RATING,
-                rating.getId(),
-                rating.getName().getDbName());
+                rating.getName().getDbName(),
+                rating.getId());
         return get(rating.getId());
     }
 
@@ -71,10 +71,10 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
             throw new InternalServerException("Произошла ошибка при удалении рейтинга с id: " + id);
         }
 
-        if (!deleteFilmRating) {
-            log.info("Произошла ошибка при удалении записей из таблицы film_rating с rating_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении связи film_rating с rating_id: " + id);
-        }
+//        if (!deleteFilmRating) {
+//            log.info("Произошла ошибка при удалении записей из таблицы film_rating с rating_id: {}", id);
+//            throw new InternalServerException("Произошла ошибка при удалении связи film_rating с rating_id: " + id);
+//        }
 
         return true;
     }

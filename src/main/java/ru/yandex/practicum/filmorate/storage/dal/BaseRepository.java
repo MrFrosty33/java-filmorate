@@ -61,6 +61,7 @@ public class BaseRepository<T> {
         String stm = "SELECT MAX(id) FROM ";
 
         // чтобы работало лишь с таблицами, откуда возможно и может потребоваться получить ID
+        // не забывать добавлять новые таблицы сюда!
         switch (tableName) {
             case "user" -> {
                 tableName = "\"user\"";
@@ -68,7 +69,7 @@ public class BaseRepository<T> {
             case "friend" -> {
                 tableName = "\"friend\"";
             }
-            case "film", "genre", "rating", "friendship_status" -> {
+            case "film", "genre", "rating", "friendship_status", "director" -> {
                 // игнорируем
             }
             default -> {

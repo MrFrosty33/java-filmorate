@@ -13,6 +13,8 @@ public interface FilmStorage {
 
     Collection<Film> getPopular(int limit);
 
+    Collection<Film> getByDirector(Long directorId, String sortBy);
+
     Film add(Film film);
 
     Set<Long> addLike(Long filmId, Long userId);
