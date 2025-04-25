@@ -19,7 +19,7 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
     private static final String INSERT_DIRECTOR = "INSERT INTO director (id, name) VALUES (?, ?)";
 
     private static final String UPDATE_DIRECTOR = "UPDATE director " +
-            "SET id = ?, name = ? WHERE id = ?";
+            "SET name = ? WHERE id = ?";
 
     private static final String DELETE_FILM_DIRECTOR_BY_DIRECTOR_ID = "DELETE FROM film_director WHERE director_id = ?";
     private static final String DELETE_FILM_DIRECTOR = "DELETE FROM film_director";
@@ -56,7 +56,6 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
     @Override
     public Director update(Director director) {
         update(UPDATE_DIRECTOR,
-                director.getId(),
                 director.getName(),
                 director.getId());
         return get(director.getId());

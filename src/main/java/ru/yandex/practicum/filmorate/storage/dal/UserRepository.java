@@ -37,9 +37,9 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             "(user_id, friend_id, friendship_status_id) VALUES (?, ?, ?)";
 
     private static final String UPDATE_USER = "UPDATE \"user\" " +
-            "SET id = ?, email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
+            "SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
     private static final String UPDATE_FRIENDSHIP_STATUS = "UPDATE \"friend\" " +
-            "SET user_id = ?, friend_id = ?, friendship_status_id = ? WHERE user_id = ? AND friend_id = ?";
+            "SET friendship_status_id = ? WHERE user_id = ? AND friend_id = ?";
 
     private static final String DELETE_USER_BY_ID = "DELETE FROM \"user\" WHERE id = ?";
     private static final String DELETE_ALL_USERS = "DELETE FROM \"user\" ";
@@ -127,7 +127,6 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         User oldUser = get(user.getId());
 
         update(UPDATE_USER,
-                user.getId(),
                 user.getEmail(),
                 user.getLogin(),
                 user.getName(),
@@ -170,8 +169,6 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     @Override
     public FriendshipStatus updateFriendshipStatus(Long id, Long friendId, FriendshipStatus friendshipStatus) {
         update(UPDATE_FRIENDSHIP_STATUS,
-                id,
-                friendId,
                 friendshipStatus,
                 id,
                 friendId);

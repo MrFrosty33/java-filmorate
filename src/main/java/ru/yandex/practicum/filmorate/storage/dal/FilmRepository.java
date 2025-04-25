@@ -44,7 +44,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String INSERT_FILM_RATING = "INSERT INTO film_rating (film_id, rating_id) VALUES (?,?)";
 
     private static final String UPDATE_FILM = "UPDATE film " +
-            "SET id = ?, name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
+            "SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
 
     private static final String DELETE_FILM_BY_ID = "DELETE FROM film WHERE id = ?";
     private static final String DELETE_ALL_FILMS = "DELETE FROM film";
@@ -180,7 +180,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
         // Сам фильм можно сразу обновить
         update(UPDATE_FILM,
-                film.getId(),
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),

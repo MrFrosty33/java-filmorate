@@ -19,7 +19,7 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
     private static final String INSERT_GENRE = "INSERT INTO genre (id, name) VALUES (?, ?)";
 
     private static final String UPDATE_GENRE = "UPDATE genre " +
-            "SET id = ?, name = ? WHERE id = ?";
+            "SET name = ? WHERE id = ?";
 
     private static final String DELETE_FILM_GENRE_BY_GENRE_ID = "DELETE FROM film_genre WHERE genre_id = ?";
     private static final String DELETE_FILM_GENRE = "DELETE FROM film_genre";
@@ -56,7 +56,6 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
     @Override
     public GenreDto update(GenreDto genre) {
         update(UPDATE_GENRE,
-                genre.getId(),
                 genre.getName(),
                 genre.getId());
         return get(genre.getId());
