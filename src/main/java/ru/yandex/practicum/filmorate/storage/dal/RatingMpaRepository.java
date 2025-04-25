@@ -13,18 +13,36 @@ import java.util.Collection;
 @Slf4j
 @Repository
 public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements RatingMpaStorage {
-    private static final String GET_ONE = "SELECT * FROM rating WHERE id = ?";
-    private static final String GET_ALL = "SELECT * FROM rating";
+    private static final String GET_ONE = """
+            SELECT * FROM rating WHERE id = ?
+            """;
+    private static final String GET_ALL = """
+            SELECT * FROM rating
+            """;
 
-    private static final String INSERT_RATING = "INSERT INTO rating (id, name) VALUES (?, ?)";
+    private static final String INSERT_RATING = """
+            INSERT INTO rating (id, name) VALUES (?, ?)
+            """;
 
-    private static final String UPDATE_RATING = "UPDATE rating " +
-            "SET name = ? WHERE id = ?";
+    private static final String UPDATE_RATING = """
+            UPDATE rating
+            SET name = ?
+            WHERE id = ?
+            """;
 
-    private static final String DELETE_FILM_RATING_BY_RATING_ID = "DELETE FROM film_rating WHERE rating_id = ?";
-    private static final String DELETE_FILM_RATING = "DELETE FROM film_rating";
-    private static final String DELETE_RATING_BY_ID = "DELETE FROM rating WHERE id = ?";
-    private static final String DELETE_ALL_RATINGS = "DELETE FROM rating";
+    private static final String DELETE_FILM_RATING_BY_RATING_ID = """
+            DELETE FROM film_rating WHERE rating_id = ?
+            """;
+    private static final String DELETE_FILM_RATING = """
+            DELETE FROM film_rating
+            """;
+    private static final String DELETE_RATING_BY_ID = """
+            DELETE FROM rating WHERE id = ?
+            """;
+    private static final String DELETE_ALL_RATINGS = """
+            DELETE FROM rating
+            """;
+
 
     public RatingMpaRepository(JdbcTemplate jdbc, RowMapper<RatingMpaDto> mapper) {
         super(jdbc, mapper);

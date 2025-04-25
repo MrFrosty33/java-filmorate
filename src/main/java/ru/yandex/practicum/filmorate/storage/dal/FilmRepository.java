@@ -18,45 +18,101 @@ import java.util.*;
 @Slf4j
 @Repository
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
-    private static final String GET_ONE = "SELECT * FROM film WHERE id IN (?)";
-    private static final String GET_ALL = "SELECT * FROM film";
-    private static final String GET_GENRE_ID_BY_NAME = "SELECT id FROM genre WHERE name in (?)";
-    private static final String GET_RATING_ID_BY_NAME = "SELECT id FROM rating WHERE name IN (?)";
-    private static final String GET_ALL_RATING_ID = "SELECT id FROM rating";
-    private static final String GET_ALL_GENRE_ID = "SELECT id FROM genre";
-    private static final String GET_ALL_DIRECTOR_ID = "SELECT id FROM director";
-    private static final String GET_POPULAR_ID = "SELECT film_id FROM \"like\" " +
-            "GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
-    private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_YEAR = "SELECT f.id FROM film f " +
-            "INNER JOIN film_director fd ON fd.film_id = f.id " +
-            "WHERE fd.director_id = ? ORDER BY EXTRACT(YEAR FROM f.release_date)";
-    private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_LIKES = "SELECT f.id FROM film f " +
-            "INNER JOIN film_director fd ON fd.film_id = f.id " +
-            "LEFT JOIN \"like\" l ON l.film_id = f.id " +
-            "WHERE fd.director_id = ? " +
-            "GROUP BY f.id ORDER BY COUNT(l.user_id) DESC";
+    private static final String GET_ONE = """
+            SELECT * FROM film WHERE id IN (?)
+            """;
+    private static final String GET_ALL = """
+            SELECT * FROM film
+            """;
+    private static final String GET_GENRE_ID_BY_NAME = """
+            SELECT id FROM genre WHERE name IN (?)
+            """;
+    private static final String GET_RATING_ID_BY_NAME = """
+            SELECT id FROM rating WHERE name IN (?)
+            """;
+    private static final String GET_ALL_RATING_ID = """
+            SELECT id FROM rating
+            """;
+    private static final String GET_ALL_GENRE_ID = """
+            SELECT id FROM genre
+            """;
+    private static final String GET_ALL_DIRECTOR_ID = """
+            SELECT id FROM director
+            """;
+    private static final String GET_POPULAR_ID = """
+            SELECT film_id FROM "like"
+            GROUP BY film_id
+            ORDER BY COUNT(user_id) DESC
+            LIMIT ?
+            """;
+    private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_YEAR = """
+            SELECT f.id FROM film f
+            INNER JOIN film_director fd ON fd.film_id = f.id
+            WHERE fd.director_id = ?
+            ORDER BY EXTRACT(YEAR FROM f.release_date)
+            """;
+    private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_LIKES = """
+            SELECT f.id FROM film f
+            INNER JOIN film_director fd ON fd.film_id = f.id
+            LEFT JOIN "like" l ON l.film_id = f.id
+            WHERE fd.director_id = ?
+            GROUP BY f.id
+            ORDER BY COUNT(l.user_id) DESC
+            """;
 
-    private static final String INSERT_FILM = "INSERT INTO film (id, name, description, release_date, duration)" +
-            " VALUES (?, ?, ?, ?, ?)";
-    private static final String INSERT_LIKE = "INSERT INTO \"like\" (user_id, film_id) VALUES (?, ?)";
-    private static final String INSERT_FILM_GENRE = "INSERT INTO film_genre (film_id, genre_id) VALUES (?,?)";
-    private static final String INSERT_FILM_DIRECTOR = "INSERT INTO film_director (film_id, director_id) VALUES (?,?)";
-    private static final String INSERT_FILM_RATING = "INSERT INTO film_rating (film_id, rating_id) VALUES (?,?)";
+    private static final String INSERT_FILM = """
+            INSERT INTO film (id, name, description, release_date, duration)
+            VALUES (?, ?, ?, ?, ?)
+            """;
+    private static final String INSERT_LIKE = """
+            INSERT INTO "like" (user_id, film_id) VALUES (?, ?)
+            """;
+    private static final String INSERT_FILM_GENRE = """
+            INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)
+            """;
+    private static final String INSERT_FILM_DIRECTOR = """
+            INSERT INTO film_director (film_id, director_id) VALUES (?, ?)
+            """;
+    private static final String INSERT_FILM_RATING = """
+            INSERT INTO film_rating (film_id, rating_id) VALUES (?, ?)
+            """;
 
-    private static final String UPDATE_FILM = "UPDATE film " +
-            "SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
+    private static final String UPDATE_FILM = """
+            UPDATE film
+            SET name = ?, description = ?, release_date = ?, duration = ?
+            WHERE id = ?
+            """;
 
-    private static final String DELETE_FILM_BY_ID = "DELETE FROM film WHERE id = ?";
-    private static final String DELETE_ALL_FILMS = "DELETE FROM film";
-    private static final String DELETE_ALL_LIKE_BY_FILM_ID = "DELETE FROM \"like\" WHERE film_id =?";
-    private static final String DELETE_LIKE_BY_USER_ID_AND_FILM_ID =
-            "DELETE FROM \"like\" WHERE user_id = ? AND film_id = ? ";
-    private static final String DELETE_ALL_LIKES = "DELETE FROM \"like\" ";
-    private static final String DELETE_ALL_FILM_GENRE_BY_FILM_ID = "DELETE FROM film_genre WHERE film_id =?";
-    private static final String DELETE_ALL_FILM_DIRECTOR_BY_FILM_ID = "DELETE FROM film_director WHERE film_id =?";
-    private static final String DELETE_ALL_FILMS_GENRES = "DELETE FROM film_genre ";
-    private static final String DELETE_ALL_FILM_RATING_BY_FILM_ID = "DELETE FROM film_rating WHERE film_id =?";
-    private static final String DELETE_ALL_FILMS_RATINGS = "DELETE FROM film_rating ";
+    private static final String DELETE_FILM_BY_ID = """
+            DELETE FROM film WHERE id = ?
+            """;
+    private static final String DELETE_ALL_FILMS = """
+            DELETE FROM film
+            """;
+    private static final String DELETE_ALL_LIKE_BY_FILM_ID = """
+            DELETE FROM "like" WHERE film_id = ?
+            """;
+    private static final String DELETE_LIKE_BY_USER_ID_AND_FILM_ID = """
+            DELETE FROM "like" WHERE user_id = ? AND film_id = ?
+            """;
+    private static final String DELETE_ALL_LIKES = """
+            DELETE FROM "like"
+            """;
+    private static final String DELETE_ALL_FILM_GENRE_BY_FILM_ID = """
+            DELETE FROM film_genre WHERE film_id = ?
+            """;
+    private static final String DELETE_ALL_FILM_DIRECTOR_BY_FILM_ID = """
+            DELETE FROM film_director WHERE film_id = ?
+            """;
+    private static final String DELETE_ALL_FILMS_GENRES = """
+            DELETE FROM film_genre
+            """;
+    private static final String DELETE_ALL_FILM_RATING_BY_FILM_ID = """
+            DELETE FROM film_rating WHERE film_id = ?
+            """;
+    private static final String DELETE_ALL_FILMS_RATINGS = """
+            DELETE FROM film_rating
+            """;
 
 
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {

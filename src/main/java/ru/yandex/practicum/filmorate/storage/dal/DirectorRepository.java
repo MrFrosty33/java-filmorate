@@ -13,18 +13,36 @@ import java.util.Collection;
 @Slf4j
 @Repository
 public class DirectorRepository extends BaseRepository<Director> implements DirectorStorage {
-    private static final String GET_ONE = "SELECT * FROM director WHERE id = ?";
-    private static final String GET_ALL = "SELECT * FROM director";
+    private static final String GET_ONE = """
+            SELECT * FROM director WHERE id = ?
+            """;
+    private static final String GET_ALL = """
+            SELECT * FROM director
+            """;
 
-    private static final String INSERT_DIRECTOR = "INSERT INTO director (id, name) VALUES (?, ?)";
+    private static final String INSERT_DIRECTOR = """
+            INSERT INTO director (id, name) VALUES (?, ?)
+            """;
 
-    private static final String UPDATE_DIRECTOR = "UPDATE director " +
-            "SET name = ? WHERE id = ?";
+    private static final String UPDATE_DIRECTOR = """
+            UPDATE director
+            SET name = ?
+            WHERE id = ?
+            """;
 
-    private static final String DELETE_FILM_DIRECTOR_BY_DIRECTOR_ID = "DELETE FROM film_director WHERE director_id = ?";
-    private static final String DELETE_FILM_DIRECTOR = "DELETE FROM film_director";
-    private static final String DELETE_DIRECTOR_BY_ID = "DELETE FROM director WHERE id = ?";
-    private static final String DELETE_ALL_DIRECTORS = "DELETE FROM director";
+    private static final String DELETE_FILM_DIRECTOR_BY_DIRECTOR_ID = """
+            DELETE FROM film_director WHERE director_id = ?
+            """;
+    private static final String DELETE_FILM_DIRECTOR = """
+            DELETE FROM film_director
+            """;
+    private static final String DELETE_DIRECTOR_BY_ID = """
+            DELETE FROM director WHERE id = ?
+            """;
+    private static final String DELETE_ALL_DIRECTORS = """
+            DELETE FROM director
+            """;
+
 
     public DirectorRepository(JdbcTemplate jdbc, RowMapper<Director> mapper) {
         super(jdbc, mapper);

@@ -17,36 +17,74 @@ import java.util.*;
 @Slf4j
 @Repository
 public class UserRepository extends BaseRepository<User> implements UserStorage {
-    private static final String GET_USER_BY_ID = "SELECT * FROM \"user\"  WHERE id = ?";
-    private static final String GET_ALL = "SELECT * FROM \"user\" ";
-    private static final String GET_FRIENDSHIP_STATUS_ID_BY_NAME = "SELECT id FROM friendship_status " +
-            "WHERE name IN (?)";
-    private static final String GET_FRIENDSHIP_STATUS_NAME_BY_ID = "SELECT name FROM friendship_status " +
-            "WHERE id = ?";
-    private static final String GET_FRIENDSHIP_STATUS_ID_BETWEEN_USERS = "SELECT friendship_status_id " +
-            "FROM \"friend\" WHERE user_id = ? AND friend_id = ? ";
-    private static final String GET_COMMON_FRIENDS_BETWEEN_USERS = "SELECT u.* FROM \"user\" u " +
-            "JOIN (SELECT friend_id FROM \"friend\" WHERE user_id = ? " +
-            "INTERSECT SELECT friend_id FROM \"friend\" WHERE user_id = ?) " +
-            "common ON u.id = common.friend_id";
-    private static final String GET_ALL_FRIENDS_BY_USER_ID = "SELECT friend_id FROM \"friend\" WHERE user_id = ?";
+    private static final String GET_USER_BY_ID = """
+            SELECT * FROM "user" WHERE id = ?
+            """;
+    private static final String GET_ALL = """
+            SELECT * FROM "user"
+            """;
+    private static final String GET_FRIENDSHIP_STATUS_ID_BY_NAME = """
+            SELECT id FROM friendship_status
+            WHERE name IN (?)
+            """;
+    private static final String GET_FRIENDSHIP_STATUS_NAME_BY_ID = """
+            SELECT name FROM friendship_status
+            WHERE id = ?
+            """;
+    private static final String GET_FRIENDSHIP_STATUS_ID_BETWEEN_USERS = """
+            SELECT friendship_status_id
+            FROM "friend"
+            WHERE user_id = ? AND friend_id = ?
+            """;
+    private static final String GET_COMMON_FRIENDS_BETWEEN_USERS = """
+            SELECT u.* FROM "user" u
+            JOIN (
+                SELECT friend_id FROM "friend" WHERE user_id = ?
+                INTERSECT
+                SELECT friend_id FROM "friend" WHERE user_id = ?
+            ) common ON u.id = common.friend_id
+            """;
+    private static final String GET_ALL_FRIENDS_BY_USER_ID = """
+            SELECT friend_id FROM "friend" WHERE user_id = ?
+            """;
 
-    private static final String INSERT_USER = "INSERT INTO \"user\" (id, email, login, name, birthday)" +
-            " VALUES (?, ?, ?, ?, ?)";
-    private static final String INSERT_FRIEND_STATUS = "INSERT INTO \"friend\" " +
-            "(user_id, friend_id, friendship_status_id) VALUES (?, ?, ?)";
+    private static final String INSERT_USER = """
+            INSERT INTO "user" (id, email, login, name, birthday)
+            VALUES (?, ?, ?, ?, ?)
+            """;
+    private static final String INSERT_FRIEND_STATUS = """
+            INSERT INTO "friend" (user_id, friend_id, friendship_status_id)
+            VALUES (?, ?, ?)
+            """;
 
-    private static final String UPDATE_USER = "UPDATE \"user\" " +
-            "SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
-    private static final String UPDATE_FRIENDSHIP_STATUS = "UPDATE \"friend\" " +
-            "SET friendship_status_id = ? WHERE user_id = ? AND friend_id = ?";
+    private static final String UPDATE_USER = """
+            UPDATE "user"
+            SET email = ?, login = ?, name = ?, birthday = ?
+            WHERE id = ?
+            """;
+    private static final String UPDATE_FRIENDSHIP_STATUS = """
+            UPDATE "friend"
+            SET friendship_status_id = ?
+            WHERE user_id = ? AND friend_id = ?
+            """;
 
-    private static final String DELETE_USER_BY_ID = "DELETE FROM \"user\" WHERE id = ?";
-    private static final String DELETE_ALL_USERS = "DELETE FROM \"user\" ";
-    private static final String DELETE_ALL_FRIENDS_BY_USER_ID = "DELETE FROM \"friend\" WHERE user_id = ?";
-    private static final String DELETE_FRIENDS_BY_USER_AND_FRIEND_ID = "DELETE FROM \"friend\" " +
-            "WHERE user_id = ? AND friend_id = ?";
-    private static final String DELETE_ALL_FRIENDS = "DELETE FROM \"friend\" ";
+    private static final String DELETE_USER_BY_ID = """
+            DELETE FROM "user" WHERE id = ?
+            """;
+    private static final String DELETE_ALL_USERS = """
+            DELETE FROM "user"
+            """;
+    private static final String DELETE_ALL_FRIENDS_BY_USER_ID = """
+            DELETE FROM "friend" WHERE user_id = ?
+            """;
+    private static final String DELETE_FRIENDS_BY_USER_AND_FRIEND_ID = """
+            DELETE FROM "friend"
+            WHERE user_id = ? AND friend_id = ?
+            """;
+    private static final String DELETE_ALL_FRIENDS = """
+            DELETE FROM "friend"
+            """;
+
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);

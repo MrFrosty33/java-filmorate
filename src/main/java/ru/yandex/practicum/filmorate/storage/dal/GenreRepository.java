@@ -13,18 +13,36 @@ import java.util.Collection;
 @Slf4j
 @Repository
 public class GenreRepository extends BaseRepository<GenreDto> implements GenreStorage {
-    private static final String GET_ONE = "SELECT * FROM genre WHERE id = ?";
-    private static final String GET_ALL = "SELECT * FROM genre";
+    private static final String GET_ONE = """
+            SELECT * FROM genre WHERE id = ?
+            """;
+    private static final String GET_ALL = """
+            SELECT * FROM genre
+            """;
 
-    private static final String INSERT_GENRE = "INSERT INTO genre (id, name) VALUES (?, ?)";
+    private static final String INSERT_GENRE = """
+            INSERT INTO genre (id, name) VALUES (?, ?)
+            """;
 
-    private static final String UPDATE_GENRE = "UPDATE genre " +
-            "SET name = ? WHERE id = ?";
+    private static final String UPDATE_GENRE = """
+            UPDATE genre
+            SET name = ?
+            WHERE id = ?
+            """;
 
-    private static final String DELETE_FILM_GENRE_BY_GENRE_ID = "DELETE FROM film_genre WHERE genre_id = ?";
-    private static final String DELETE_FILM_GENRE = "DELETE FROM film_genre";
-    private static final String DELETE_GENRE_BY_ID = "DELETE FROM genre WHERE id = ?";
-    private static final String DELETE_ALL_GENRES = "DELETE FROM genre";
+    private static final String DELETE_FILM_GENRE_BY_GENRE_ID = """
+            DELETE FROM film_genre WHERE genre_id = ?
+            """;
+    private static final String DELETE_FILM_GENRE = """
+            DELETE FROM film_genre
+            """;
+    private static final String DELETE_GENRE_BY_ID = """
+            DELETE FROM genre WHERE id = ?
+            """;
+    private static final String DELETE_ALL_GENRES = """
+            DELETE FROM genre
+            """;
+
 
     public GenreRepository(JdbcTemplate jdbc, RowMapper<GenreDto> mapper) {
         super(jdbc, mapper);
