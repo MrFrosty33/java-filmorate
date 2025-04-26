@@ -160,7 +160,7 @@ public class FilmService {
         User user = userService.get(userId);
 
         if (film.getLikes().contains(userId)) {
-            film.getLikes().remove(userId);
+            filmRepository.deleteLike(filmId, userId);
             log.info("У фильма с id: {} был удалён лайк от пользователя с id: {}",
                     filmId, userId);
         } else {
