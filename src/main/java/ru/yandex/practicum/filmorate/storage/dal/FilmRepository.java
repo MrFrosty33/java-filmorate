@@ -40,9 +40,11 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             SELECT id FROM director
             """;
     private static final String GET_POPULAR_ID = """
-            SELECT film_id FROM "like"
-            GROUP BY film_id
-            ORDER BY COUNT(user_id) DESC
+            SELECT f.id
+            FROM film f
+            LEFT JOIN "like" l ON f.id = l.film_id
+            GROUP BY f.id
+            ORDER BY COUNT(l.user_id) DESC
             LIMIT ?
             """;
     private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_YEAR = """
