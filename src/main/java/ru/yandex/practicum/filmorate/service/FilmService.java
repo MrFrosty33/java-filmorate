@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
 import java.util.*;
 
@@ -22,7 +21,6 @@ public class FilmService {
     private final FilmRepository filmRepository;
     private final UserService userService;
     private final DirectorService directorService;
-    private final UserRepository userRepository;
 
     public Film get(Long id) {
         validateFilmExists(Optional.of(id),
@@ -192,13 +190,8 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(long userId, long friendId) {
-        if (userRepository.get(userId) == null) {
-            throw new NotFoundException("Не существует пользователь с id: " + userId);
-        }
-
-        if (userRepository.get(friendId) == null) {
-            throw new NotFoundException("Не существует пользователь с id: " + friendId);
-        }
+        userService.get(userId);
+        userService.get(friendId);
         return filmRepository.getCommonFilms(userId, friendId);
     }
 }

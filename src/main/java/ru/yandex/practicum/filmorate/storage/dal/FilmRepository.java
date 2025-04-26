@@ -113,12 +113,9 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String DELETE_ALL_FILMS_RATINGS = """
             DELETE FROM film_rating
             """;
-    private final RowMapper<Film> filmRowMapper;
 
-
-    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper, RowMapper<Film> filmRowMapper) {
+    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
-        this.filmRowMapper = filmRowMapper;
     }
 
     @Override
@@ -369,6 +366,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 WHERE user_id = ?) ORDER BY l.user_likes desc
                 """;
 
-        return jdbc.query(sql, filmRowMapper, userId, friendId);
+        return jdbc.query(sql, mapper, userId, friendId);
     }
 }
