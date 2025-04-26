@@ -216,8 +216,9 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
 
     @Override
     public FriendshipStatus updateFriendshipStatus(Long id, Long friendId, FriendshipStatus friendshipStatus) {
+        Long statusId = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_BY_NAME, Long.class, friendshipStatus.name());
         update(UPDATE_FRIENDSHIP_STATUS,
-                friendshipStatus,
+                statusId,
                 id,
                 friendId);
 
