@@ -131,7 +131,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             DELETE FROM film_rating
             """;
 
-
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
     }
