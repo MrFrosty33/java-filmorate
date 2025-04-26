@@ -268,21 +268,16 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     }
 
     private void deleteRelated(Optional<Long> userId) {
-        try {
-            if (userId.isPresent()) {
-                jdbc.update(DELETE_LIKE_BY_ID, userId.get());
-                log.info("Были удалены все лайки из таблицы like от пользователя с id: {}", userId.get());
-                jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID, userId.get());
-                log.info("Были удалены все друзья из таблицы friend у пользователя с id: {}", userId.get());
-            } else {
-                jdbc.update(DELETE_ALL_LIKES);
-                log.info("Была очищена таблица like");
-                jdbc.update(DELETE_ALL_FRIENDS);
-                log.info("Была очищена таблица friend");
-            }
-        } catch (NullPointerException e) {
-            log.info("В методе deleteRelated в UserRepository был передан null в качестве параметра");
-            throw new InternalServerException("Произошла ошибка при удалении данных из смежных таблиц user");
+        if (userId.isPresent()) {
+            jdbc.update(DELETE_LIKE_BY_ID, userId.get());
+            log.info("Были удалены все лайки из таблицы like от пользователя с id: {}", userId.get());
+            jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID, userId.get());
+            log.info("Были удалены все друзья из таблицы friend у пользователя с id: {}", userId.get());
+        } else {
+            jdbc.update(DELETE_ALL_LIKES);
+            log.info("Была очищена таблица like");
+            jdbc.update(DELETE_ALL_FRIENDS);
+            log.info("Была очищена таблица friend");
         }
     }
 }

@@ -107,17 +107,12 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
     }
 
     private void deleteRelated(Optional<Long> ratingId) {
-        try {
-            if (ratingId.isPresent()) {
-                jdbc.update(DELETE_FILM_RATING_BY_RATING_ID, ratingId.get());
-                log.info("Были удалены все записи из таблицы film_rating у рейтинга с id: {}", ratingId.get());
-            } else {
-                jdbc.update(DELETE_FILM_RATING);
-                log.info("Была очищена таблица film_rating");
-            }
-        } catch (NullPointerException e) {
-            log.info("В методе deleteRelated в RatingMpaRepository был передан null в качестве параметра");
-            throw new InternalServerException("Произошла ошибка при удалении данных из смежных таблиц rating");
+        if (ratingId.isPresent()) {
+            jdbc.update(DELETE_FILM_RATING_BY_RATING_ID, ratingId.get());
+            log.info("Были удалены все записи из таблицы film_rating у рейтинга с id: {}", ratingId.get());
+        } else {
+            jdbc.update(DELETE_FILM_RATING);
+            log.info("Была очищена таблица film_rating");
         }
     }
 }

@@ -45,7 +45,6 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
             """;
 
 
-
     public DirectorRepository(JdbcTemplate jdbc, RowMapper<Director> mapper) {
         super(jdbc, mapper);
     }
@@ -108,17 +107,12 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
     }
 
     private void deleteRelated(Optional<Long> directorId) {
-        try {
-            if (directorId.isPresent()) {
-                jdbc.update(DELETE_FILM_DIRECTOR_BY_DIRECTOR_ID, directorId.get());
-                log.info("Были удалены все записи из таблицы film_director у режиссёра с id: {}", directorId.get());
-            } else {
-                jdbc.update(DELETE_FILM_DIRECTOR);
-                log.info("Была очищена таблица film_director");
-            }
-        } catch (NullPointerException e) {
-            log.info("В методе deleteRelated в DirectorRepository был передан null в качестве параметра");
-            throw new InternalServerException("Произошла ошибка при удалении данных из смежных таблиц director");
+        if (directorId.isPresent()) {
+            jdbc.update(DELETE_FILM_DIRECTOR_BY_DIRECTOR_ID, directorId.get());
+            log.info("Были удалены все записи из таблицы film_director у режиссёра с id: {}", directorId.get());
+        } else {
+            jdbc.update(DELETE_FILM_DIRECTOR);
+            log.info("Была очищена таблица film_director");
         }
     }
 }

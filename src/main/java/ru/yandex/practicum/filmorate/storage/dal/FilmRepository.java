@@ -334,29 +334,24 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         // придётся проверять, есть ли запись, и есть ли есть, удалять
         // и только тогда уже, если ничего не удалено - выбрасывать ошибку
         // но стоит ли грузить метод доп вызовами к БД?
-        try {
-            if (filmId.isPresent()) {
-                jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID, filmId.get());
-                log.info("Были удалены все лайки из таблицы like у фильма с id: {}", filmId.get());
-                jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID, filmId.get());
-                log.info("Были удалены все связи из таблицы film_genre у фильма с id: {}", filmId.get());
-                jdbc.update(DELETE_ALL_FILM_DIRECTOR_BY_FILM_ID, filmId.get());
-                log.info("Были удалены все связи из таблицы film_director у фильма с id: {}", filmId.get());
-                jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID, filmId.get());
-                log.info("Были удалены все связи из таблицы film_rating у фильма с id: {}", filmId.get());
-            } else {
-                jdbc.update(DELETE_ALL_LIKES);
-                log.info("Была очищена таблица like");
-                jdbc.update(DELETE_ALL_FILMS_GENRES);
-                log.info("Была очищена таблица film_genre");
-                jdbc.update(DELETE_ALL_FILMS_RATINGS);
-                log.info("Была очищена таблица film_rating");
-                jdbc.update(DELETE_ALL_FILM_DIRECTOR);
-                log.info("Была очищена таблица film_director");
-            }
-        } catch (NullPointerException e) {
-            log.info("В методе deleteRelated в FilmRepository был передан null в качестве параметра");
-            throw new InternalServerException("Произошла ошибка при удалении данных из смежных таблиц film");
+        if (filmId.isPresent()) {
+            jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID, filmId.get());
+            log.info("Были удалены все лайки из таблицы like у фильма с id: {}", filmId.get());
+            jdbc.update(DELETE_ALL_FILM_GENRE_BY_FILM_ID, filmId.get());
+            log.info("Были удалены все связи из таблицы film_genre у фильма с id: {}", filmId.get());
+            jdbc.update(DELETE_ALL_FILM_DIRECTOR_BY_FILM_ID, filmId.get());
+            log.info("Были удалены все связи из таблицы film_director у фильма с id: {}", filmId.get());
+            jdbc.update(DELETE_ALL_FILM_RATING_BY_FILM_ID, filmId.get());
+            log.info("Были удалены все связи из таблицы film_rating у фильма с id: {}", filmId.get());
+        } else {
+            jdbc.update(DELETE_ALL_LIKES);
+            log.info("Была очищена таблица like");
+            jdbc.update(DELETE_ALL_FILMS_GENRES);
+            log.info("Была очищена таблица film_genre");
+            jdbc.update(DELETE_ALL_FILMS_RATINGS);
+            log.info("Была очищена таблица film_rating");
+            jdbc.update(DELETE_ALL_FILM_DIRECTOR);
+            log.info("Была очищена таблица film_director");
         }
     }
 }

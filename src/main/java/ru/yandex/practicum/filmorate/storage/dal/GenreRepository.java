@@ -107,17 +107,12 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
     }
 
     private void deleteRelated(Optional<Long> genreId) {
-        try {
-            if (genreId.isPresent()) {
-                jdbc.update(DELETE_FILM_GENRE_BY_GENRE_ID, genreId.get());
-                log.info("Были удалены все записи из таблицы film_genre у жанра с id: {}", genreId.get());
-            } else {
-                jdbc.update(DELETE_FILM_GENRE);
-                log.info("Была очищена таблица film_genre");
-            }
-        } catch (NullPointerException e) {
-            log.info("В методе deleteRelated в GenreRepository был передан null в качестве параметра");
-            throw new InternalServerException("Произошла ошибка при удалении данных из смежных таблиц genre");
+        if (genreId.isPresent()) {
+            jdbc.update(DELETE_FILM_GENRE_BY_GENRE_ID, genreId.get());
+            log.info("Были удалены все записи из таблицы film_genre у жанра с id: {}", genreId.get());
+        } else {
+            jdbc.update(DELETE_FILM_GENRE);
+            log.info("Была очищена таблица film_genre");
         }
     }
 }
