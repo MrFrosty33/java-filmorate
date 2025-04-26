@@ -74,6 +74,12 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     private static final String DELETE_ALL_USERS = """
             DELETE FROM "user"
             """;
+    private static final String DELETE_LIKE_BY_ID = """
+            DELETE FROM "like" WHERE user_id = ?
+            """;
+    private static final String DELETE_ALL_LIKES = """
+            DELETE FROM "like"
+            """;
     private static final String DELETE_ALL_FRIENDS_BY_USER_ID = """
             DELETE FROM "friend" WHERE user_id = ?
             """;
@@ -217,17 +223,13 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     @Override
     @Transactional
     public boolean delete(Long id) {
+        deleteRelated(Optional.of(id));
         boolean deleteUser = deleteOne(DELETE_USER_BY_ID, id);
-        boolean deleteFriend = jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID, id) > 0;
 
         if (!deleteUser) {
             log.info("Произошла ошибка при удалении записи из таблицы user с id: {}", id);
             throw new InternalServerException("Произошла ошибка при удалении записи из таблицы user с id: " + id);
         }
-//        if (!deleteFriend) {
-//            log.info("Произошла ошибка при удалении записи из таблицы friend с user_id: {}", id);
-//            throw new InternalServerException("Произошла ошибка при удалении записи из таблицы friend с user_id: " + id);
-//        }
 
         return true;
     }
@@ -235,17 +237,13 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     @Override
     @Transactional
     public boolean deleteAll() {
+        deleteRelated(Optional.empty());
         boolean deleteUser = deleteAll(DELETE_ALL_USERS);
-        boolean deleteFriend = jdbc.update(DELETE_ALL_FRIENDS) > 0;
 
         if (!deleteUser) {
             log.info("Произошла ошибка при удалении всех записей из таблицы user");
             throw new InternalServerException("Произошла ошибка при очистке таблицы user");
         }
-//        if (!deleteFriend) {
-//            log.info("Произошла ошибка при удалении всех записей из таблицы friend");
-//            throw new InternalServerException("Произошла ошибка при очистке таблицы friend");
-//        }
 
         return true;
     }
@@ -262,5 +260,24 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         }
 
         return true;
+    }
+
+    private void deleteRelated(Optional<Long> userId) {
+        try {
+            if (userId.isPresent()) {
+                jdbc.update(DELETE_LIKE_BY_ID, userId.get());
+                log.info("Были удалены все лайки из таблицы like от пользователя с id: {}", userId.get());
+                jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID, userId.get());
+                log.info("Были удалены все друзья из таблицы friend у пользователя с id: {}", userId.get());
+            } else {
+                jdbc.update(DELETE_ALL_LIKES);
+                log.info("Была очищена таблица like");
+                jdbc.update(DELETE_ALL_FRIENDS);
+                log.info("Была очищена таблица friend");
+            }
+        } catch (NullPointerException e) {
+            log.info("В методе deleteRelated в UserRepository был передан null в качестве параметра");
+            throw new InternalServerException("Произошла ошибка при удалении данных из смежных таблиц user");
+        }
     }
 }
