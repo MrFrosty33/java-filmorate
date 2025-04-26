@@ -61,6 +61,18 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             GROUP BY f.id
             ORDER BY COUNT(l.user_id) DESC
             """;
+    private static final String GET_COMMON_FILMS = """
+            SELECT f.id, f.name, f.release_date, f.description, f.duration
+            FROM film as f
+            JOIN (SELECT count(user_id) as user_likes, film_id from "like"
+            GROUP BY film_id) as l on f.id = l.film_id
+            WHERE f.id IN (
+            SELECT film_id FROM "like"
+            WHERE user_id = ?
+            INTERSECT
+            SELECT film_id FROM "like"
+            WHERE user_id = ?) ORDER BY l.user_likes desc
+            """;
 
     private static final String INSERT_FILM = """
             INSERT INTO film (id, name, description, release_date, duration)
@@ -103,14 +115,14 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String DELETE_ALL_FILM_GENRE_BY_FILM_ID = """
             DELETE FROM film_genre WHERE film_id = ?
             """;
-    private static final String DELETE_ALL_FILMS_GENRES = """
-            DELETE FROM film_genre
-            """;
     private static final String DELETE_ALL_FILM_DIRECTOR_BY_FILM_ID = """
             DELETE FROM film_director WHERE film_id = ?
             """;
     private static final String DELETE_ALL_FILM_DIRECTOR = """
             DELETE FROM film_director
+            """;
+    private static final String DELETE_ALL_FILMS_GENRES = """
+            DELETE FROM film_genre
             """;
     private static final String DELETE_ALL_FILM_RATING_BY_FILM_ID = """
             DELETE FROM film_rating WHERE film_id = ?
@@ -353,5 +365,10 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             jdbc.update(DELETE_ALL_FILM_DIRECTOR);
             log.info("Была очищена таблица film_director");
         }
+    }
+
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return jdbc.query(GET_COMMON_FILMS, mapper, userId, friendId);
     }
 }
