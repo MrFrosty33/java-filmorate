@@ -113,10 +113,12 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String DELETE_ALL_FILMS_RATINGS = """
             DELETE FROM film_rating
             """;
+    private final RowMapper<Film> filmRowMapper;
 
 
-    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
+    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper, RowMapper<Film> filmRowMapper) {
         super(jdbc, mapper);
+        this.filmRowMapper = filmRowMapper;
     }
 
     @Override
@@ -351,5 +353,22 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         }
 
         return true;
+    }
+
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        String sql = """
+                SELECT * FROM film as f
+                JOIN (SELECT count(user_id) as user_likes, film_id from "like"
+                GROUP BY film_id) as l on f.id = l.film_id
+                WHERE f.id IN (
+                SELECT film_id FROM "like"
+                WHERE user_id = ?
+                INTERSECT
+                SELECT film_id FROM "like"
+                WHERE user_id = ?) ORDER BY l.user_likes desc
+                """;
+
+        return jdbc.query(sql, filmRowMapper, userId, friendId);
     }
 }

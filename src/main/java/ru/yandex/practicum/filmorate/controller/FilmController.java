@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -69,5 +70,10 @@ public class FilmController {
     @DeleteMapping
     public void deleteAll() {
         filmService.deleteAll();
+    }
+
+    @GetMapping(value = "/common", params = {"userId", "friendId"})
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
     }
 }

@@ -11,11 +11,9 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
+import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -24,6 +22,7 @@ public class FilmService {
     private final FilmRepository filmRepository;
     private final UserService userService;
     private final DirectorService directorService;
+    private final UserRepository userRepository;
 
     public Film get(Long id) {
         validateFilmExists(Optional.of(id),
@@ -160,7 +159,7 @@ public class FilmService {
         User user = userService.get(userId);
 
         if (film.getLikes().contains(userId)) {
-            film.getLikes().remove(userId);
+            filmRepository.deleteLike(filmId, userId);
             log.info("У фильма с id: {} был удалён лайк от пользователя с id: {}",
                     filmId, userId);
         } else {
@@ -190,5 +189,16 @@ public class FilmService {
             log.info(logMessage);
             throw e;
         }
+    }
+
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        if (userRepository.get(userId) == null) {
+            throw new NotFoundException("Не существует пользователь с id: " + userId);
+        }
+
+        if (userRepository.get(friendId) == null) {
+            throw new NotFoundException("Не существует пользователь с id: " + friendId);
+        }
+        return filmRepository.getCommonFilms(userId, friendId);
     }
 }
