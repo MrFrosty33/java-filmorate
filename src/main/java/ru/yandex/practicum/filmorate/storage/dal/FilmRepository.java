@@ -59,6 +59,22 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             GROUP BY f.id
             ORDER BY COUNT(l.user_id) DESC
             """;
+    private static final String SEARCH_FILMS_BY_TITLE = """
+            SELECT f.id FROM film f
+            WHERE LOWER(f.name) LIKE LOWER(?)
+            """;
+    private static final String SEARCH_FILMS_BY_DIRECTOR = """
+            SELECT f.id FROM film f
+            INNER JOIN film_director fd ON fd.film_id = f.id
+            INNER JOIN director d ON d.id = fd.director_id
+            WHERE LOWER(d.name) LIKE LOWER(?)
+            """;
+    private static final String SEARCH_FILMS_BY_TITLE_AND_DIRECTOR = """
+            SELECT f.id FROM film f
+            LEFT JOIN film_director fd ON fd.film_id = f.id
+            LEFT JOIN director d ON d.id = fd.director_id
+            WHERE LOWER(f.name) LIKE LOWER(?) OR LOWER(d.name) LIKE LOWER(?)
+            """;
 
     private static final String INSERT_FILM = """
             INSERT INTO film (id, name, description, release_date, duration)
@@ -351,5 +367,26 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         }
 
         return true;
+    }
+
+    @Override
+    public Collection<Film> search(String query, String by) {
+        String searchQuery = "%" + query + "%";
+        Collection<Long> filmIds = new ArrayList<>();
+
+        if (by.contains("title") && by.contains("director")) {
+            filmIds = jdbc.queryForList(SEARCH_FILMS_BY_TITLE_AND_DIRECTOR, Long.class, searchQuery, searchQuery);
+        } else if (by.contains("title")) {
+            filmIds = jdbc.queryForList(SEARCH_FILMS_BY_TITLE, Long.class, searchQuery);
+        } else if (by.contains("director")) {
+            filmIds = jdbc.queryForList(SEARCH_FILMS_BY_DIRECTOR, Long.class, searchQuery);
+        }
+
+        Collection<Film> result = new ArrayList<>();
+        for (Long id : filmIds) {
+            result.add(get(id));
+        }
+
+        return result;
     }
 }

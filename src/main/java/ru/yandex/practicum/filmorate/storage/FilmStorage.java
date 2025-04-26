@@ -26,4 +26,6 @@ public interface FilmStorage {
     boolean deleteAll();
 
     boolean deleteLike(Long filmId, Long userId);
+
+    Collection<Film> search(String query, String by);
 }

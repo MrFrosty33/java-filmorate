@@ -191,4 +191,23 @@ public class FilmService {
             throw e;
         }
     }
+
+    public Collection<Film> search(String query, String by) {
+        if (query == null || query.isBlank()) {
+            log.info("Попытка поиска с пустым запросом");
+            throw new BadRequestParamException("Запрос не может быть пустым");
+        }
+
+        if (by == null || by.isBlank()) {
+            log.info("Попытка поиска без указания параметра by");
+            throw new BadRequestParamException("Параметр by не может быть пустым");
+        }
+
+        if (!by.contains("title") && !by.contains("director")) {
+            log.info("Попытка поиска с неподдерживаемым значением параметра by: {}", by);
+            throw new BadRequestParamException("Параметр by может принимать значения: title, director или оба значения через запятую");
+        }
+
+        return filmRepository.search(query, by);
+    }
 }
