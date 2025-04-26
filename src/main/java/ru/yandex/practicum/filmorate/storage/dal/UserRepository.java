@@ -192,13 +192,16 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
                     // тут либо получать список всех друзей по friendId и смотреть, есть ли там user.getId()
                     // либо менее трудоёмко - получать статус дружбы между friendId и user.getId()
                     // таким образом сократил с трёх запросов за каждую итерацию цикла до одного - уже лучше
-                    getFriendshipStatus(friendId, user.getId());
+                    Long friendshipId = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_BY_NAME,
+                            Long.class, getFriendshipStatus(friendId, user.getId()));
 
-                    batchInsertUserFriend.add(new Object[]{user.getId(), friendId, FriendshipStatus.CONFIRMED});
-                    batchInsertFriendUser.add(new Object[]{friendId, user.getId(), FriendshipStatus.CONFIRMED});
+                    batchInsertUserFriend.add(new Object[]{user.getId(), friendId, friendshipId});
+                    batchInsertFriendUser.add(new Object[]{friendId, user.getId(), friendshipId});
                     batchDeleteFriendUserRelation.add(new Object[]{friendId, user.getId()});
                 } catch (EmptyResultDataAccessException e) {
-                    batchInsertUserFriend.add(new Object[]{user.getId(), friendId, FriendshipStatus.UNCONFIRMED});
+                    Long friendshipId = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_BY_NAME,
+                            Long.class, FriendshipStatus.UNCONFIRMED);
+                    batchInsertUserFriend.add(new Object[]{user.getId(), friendId, friendshipId});
                 }
             }
 
