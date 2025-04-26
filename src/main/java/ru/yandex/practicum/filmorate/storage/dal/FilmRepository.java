@@ -115,6 +115,9 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String DELETE_ALL_FILM_GENRE_BY_FILM_ID = """
             DELETE FROM film_genre WHERE film_id = ?
             """;
+    private static final String DELETE_ALL_FILMS_GENRES = """
+            DELETE FROM film_genre
+            """;
     private static final String DELETE_ALL_FILM_DIRECTOR_BY_FILM_ID = """
             DELETE FROM film_director WHERE film_id = ?
             """;
