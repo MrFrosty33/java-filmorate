@@ -57,3 +57,4 @@ CREATE TABLE IF NOT EXISTS "like" (
     film_id INTEGER REFERENCES film(id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, film_id)
 );
+
