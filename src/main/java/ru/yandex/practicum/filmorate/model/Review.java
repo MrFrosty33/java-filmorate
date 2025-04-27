@@ -27,6 +27,6 @@ public class Review {
     @Column(name = "useful", nullable = false)
     private Integer useful;
 
-    public Review() {
+    public Review() {   //постман пусти на гит!
     }
 }
