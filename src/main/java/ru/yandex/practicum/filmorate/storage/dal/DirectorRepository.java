@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.DirectorStorage;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @Slf4j
 @Repository
@@ -81,7 +82,7 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
 
     @Override
     public boolean delete(Long id) {
-        boolean deleteFilmDirector = jdbc.update(DELETE_FILM_DIRECTOR_BY_DIRECTOR_ID, id) > 0;
+        deleteRelated(Optional.of(id));
         boolean deleteDirector = deleteOne(DELETE_DIRECTOR_BY_ID, id);
 
         if (!deleteDirector) {
@@ -89,21 +90,12 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
             throw new InternalServerException("Произошла ошибка при удалении режиссёра с id: " + id);
         }
 
-        // это не ошибка. Если в таблице нет таких упоминаний, вернёт 0 и будет false
-        // однако это может означать, что у режиссёра просто ещё нет фильмов.
-        // стоит ли вообще подобные методы переутруждать проверкой такой?
-        // или же просто пытаться удалить, если удалится что-то - хорошо, если нет, то и не было записей значит?
-//        if (!deleteFilmDirector) {
-//            log.info("Произошла ошибка при удалении записей из таблицы film_director с director_id: {}", id);
-//            throw new InternalServerException("Произошла ошибка при удалении связи film_director с director_id: " + id);
-//        }
-
         return true;
     }
 
     @Override
     public boolean deleteAll() {
-        boolean deleteFilmDirector = jdbc.update(DELETE_FILM_DIRECTOR) > 0;
+        deleteRelated(Optional.empty());
         boolean deleteDirector = deleteAll(DELETE_ALL_DIRECTORS);
 
         if (!deleteDirector) {
@@ -111,11 +103,16 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
             throw new InternalServerException("Произошла ошибка при удалении всех записей из таблицы director");
         }
 
-        if (!deleteFilmDirector) {
-            log.info("Произошла ошибка при удалении всех записей из таблицы film_director");
-            throw new InternalServerException("Произошла ошибка при удалении всех записей из таблицы film_director");
-        }
-
         return true;
+    }
+
+    private void deleteRelated(Optional<Long> directorId) {
+        if (directorId.isPresent()) {
+            jdbc.update(DELETE_FILM_DIRECTOR_BY_DIRECTOR_ID, directorId.get());
+            log.info("Были удалены все записи из таблицы film_director у режиссёра с id: {}", directorId.get());
+        } else {
+            jdbc.update(DELETE_FILM_DIRECTOR);
+            log.info("Была очищена таблица film_director");
+        }
     }
 }
