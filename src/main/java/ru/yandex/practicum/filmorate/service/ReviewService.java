@@ -16,12 +16,11 @@ public interface ReviewService {
 
     List<Review> getReviewsByFilmId(Long filmId, int count);
 
-    void addLike(Long reviewId, Long userId);
+    Review addLike(Long reviewId, Long userId);
 
-    void addDislike(Long reviewId, Long userId);
+    Review addDislike(Long reviewId, Long userId);
 
-    void removeLike(Long reviewId, Long userId);
+    Review removeLike(Long reviewId, Long userId);
 
-    void removeDislike(Long reviewId, Long userId);
-
+    Review removeDislike(Long reviewId, Long userId);
 }
