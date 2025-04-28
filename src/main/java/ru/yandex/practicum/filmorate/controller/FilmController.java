@@ -1,12 +1,14 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
+import java.time.Year;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,8 +24,9 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
-        return filmService.getPopular(count);
+    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count,
+                                       @RequestParam(required = false) Long genreId, @RequestParam(required = false) @PastOrPresent Year year) {
+        return filmService.getPopular(count, genreId, year);
     }
 
     @GetMapping("/director/{directorId}")

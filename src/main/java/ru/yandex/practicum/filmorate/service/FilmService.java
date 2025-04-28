@@ -12,11 +12,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Optional;
-import java.util.Collection;
+import java.time.Year;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -24,6 +21,7 @@ import java.util.Collection;
 public class FilmService {
     private final FilmRepository filmRepository;
     private final UserService userService;
+    private final GenreService genreService;
     private final DirectorService directorService;
 
     public Film get(Long id) {
@@ -44,7 +42,7 @@ public class FilmService {
         return filmRepository.getAll();
     }
 
-    public Collection<Film> getPopular(int limit) {
+    public Collection<Film> getPopular(int limit, Long genreId, Year year) {
         validateFilmExists(Optional.empty(),
                 new NotFoundException("Таблица film пуста"),
                 "Попытка получить данные из таблицы film, которая пуста");
@@ -54,7 +52,16 @@ public class FilmService {
             throw new BadRequestParamException("limit не может быть меньше или равен 0");
         }
 
-        Collection<Film> result = filmRepository.getPopular(limit);
+        if (genreId != null) {
+            genreService.get(genreId);
+        }
+
+        if (year != null && year.getValue() > Year.now().getValue()) {
+            log.info("Попытка получить список популярных фильмов c year = {}", year.toString());
+            throw new BadRequestParamException("year не может быть в будущем");
+        }
+
+        Collection<Film> result = filmRepository.getPopular(limit, genreId, year);
         log.info("Получен список из {} наиболее популярных фильмов", result.size());
         return result;
     }

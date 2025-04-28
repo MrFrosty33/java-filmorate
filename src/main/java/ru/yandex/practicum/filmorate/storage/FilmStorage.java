@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.time.Year;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -12,7 +13,7 @@ public interface FilmStorage {
 
     Collection<Film> getAll();
 
-    Collection<Film> getPopular(int limit);
+    Collection<Film> getPopular(int limit, Long genreId, Year year);
 
     Collection<Film> getByDirector(Long directorId, String sortBy);
 
