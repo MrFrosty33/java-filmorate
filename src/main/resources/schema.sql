@@ -1,5 +1,3 @@
--- Стоит ли дополнительно добавлять NOT NULL? В логике приложения все эти случаи обрабатываются,
--- не должно возникнуть случая, когда будут переданы некорректные данные в БД.
 CREATE TABLE IF NOT EXISTS genre (
     id BIGINT PRIMARY KEY,
     name VARCHAR NOT NULL
@@ -8,6 +6,11 @@ CREATE TABLE IF NOT EXISTS genre (
 CREATE TABLE IF NOT EXISTS rating (
     id BIGINT PRIMARY KEY,
     name VARCHAR NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS director (
+    id BIGINT  PRIMARY KEY,
+    name VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS film (
@@ -41,6 +44,12 @@ CREATE TABLE IF NOT EXISTS film_rating (
     film_id BIGINT NOT NULL REFERENCES film(id) ON DELETE CASCADE,
     rating_id BIGINT NOT NULL REFERENCES rating(id) ON DELETE CASCADE,
     PRIMARY KEY (film_id, rating_id)
+);
+
+CREATE TABLE IF NOT EXISTS film_director (
+    film_id BIGINT REFERENCES film(id) ON DELETE CASCADE,
+    director_id BIGINT REFERENCES director(id) ON DELETE CASCADE,
+    PRIMARY KEY (film_id, director_id)
 );
 
 CREATE TABLE IF NOT EXISTS "friend" (
