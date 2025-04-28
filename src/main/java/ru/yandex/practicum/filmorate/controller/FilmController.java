@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -23,6 +24,11 @@ public class FilmController {
     @GetMapping("/popular")
     public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
         return filmService.getPopular(count);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<Film> getByDirector(@PathVariable Long directorId, @RequestParam String sortBy) {
+        return filmService.getByDirector(directorId, sortBy);
     }
 
     @GetMapping
@@ -64,5 +70,10 @@ public class FilmController {
     @DeleteMapping
     public void deleteAll() {
         filmService.deleteAll();
+    }
+
+    @GetMapping(value = "/common")
+    public List<Film> getCommonFilms(@RequestParam long userId, @RequestParam long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
     }
 }

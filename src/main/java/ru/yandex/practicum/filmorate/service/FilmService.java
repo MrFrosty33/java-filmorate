@@ -7,14 +7,16 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.BadRequestParamException;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
+import java.util.Optional;
+import java.util.Collection;
 
 @Slf4j
 @Service
@@ -22,6 +24,7 @@ import java.util.Set;
 public class FilmService {
     private final FilmRepository filmRepository;
     private final UserService userService;
+    private final DirectorService directorService;
 
     public Film get(Long id) {
         validateFilmExists(Optional.of(id),
@@ -56,6 +59,22 @@ public class FilmService {
         return result;
     }
 
+    public Collection<Film> getByDirector(Long directorId, String sortBy) {
+        Director director = directorService.get(directorId);
+        Collection<Film> result;
+
+        switch (sortBy) {
+            case "year", "likes" -> result = filmRepository.getByDirector(directorId, sortBy);
+            default -> {
+                log.info("Попытка получить список фильмов по режиссёру с sortBy = {}", sortBy);
+                throw new BadRequestParamException("Был передан sortBy с неподдерживаемым типом сортировки: " + sortBy +
+                        ". Поддерживаются только year, likes");
+            }
+        }
+
+        return result;
+    }
+
     public Film add(Film film) {
         if (film.getLikes() == null) {
             film.setLikes(new HashSet<>());
@@ -63,6 +82,10 @@ public class FilmService {
 
         if (film.getGenres() == null) {
             film.setGenres(new HashSet<>());
+        }
+
+        if (film.getDirectors() == null) {
+            film.setDirectors(new HashSet<>());
         }
 
         if (!film.getLikes().isEmpty()) {
@@ -99,9 +122,13 @@ public class FilmService {
             film.setGenres(new HashSet<>());
         }
 
+        if (film.getDirectors() == null) {
+            film.setDirectors(new HashSet<>());
+        }
+
+        film = filmRepository.update(film);
         log.info("Был обновлён фильм с id: {}", id);
-        filmRepository.update(film);
-        return filmRepository.get(id);
+        return film;
     }
 
     // В репозитории оставил один метод update(Film film)
@@ -134,7 +161,7 @@ public class FilmService {
         User user = userService.get(userId);
 
         if (film.getLikes().contains(userId)) {
-            film.getLikes().remove(userId);
+            filmRepository.deleteLike(filmId, userId);
             log.info("У фильма с id: {} был удалён лайк от пользователя с id: {}",
                     filmId, userId);
         } else {
@@ -155,7 +182,7 @@ public class FilmService {
                 }
             } else {
                 Optional<Collection<Film>> result = Optional.ofNullable(filmRepository.getAll());
-                if (result.isEmpty()) {
+                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }
@@ -164,5 +191,11 @@ public class FilmService {
             log.info(logMessage);
             throw e;
         }
+    }
+
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        userService.get(userId);
+        userService.get(friendId);
+        return filmRepository.getCommonFilms(userId, friendId);
     }
 }

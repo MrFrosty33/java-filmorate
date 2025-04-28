@@ -17,36 +17,80 @@ import java.util.*;
 @Slf4j
 @Repository
 public class UserRepository extends BaseRepository<User> implements UserStorage {
-    private static final String GET_USER_BY_ID = "SELECT * FROM \"user\"  WHERE id = ?";
-    private static final String GET_ALL = "SELECT * FROM \"user\" ";
-    private static final String GET_FRIENDSHIP_STATUS_ID_BY_NAME = "SELECT id FROM friendship_status " +
-            "WHERE name IN (?)";
-    private static final String GET_FRIENDSHIP_STATUS_NAME_BY_ID = "SELECT name FROM friendship_status " +
-            "WHERE id = ?";
-    private static final String GET_FRIENDSHIP_STATUS_ID_BETWEEN_USERS = "SELECT friendship_status_id " +
-            "FROM \"friend\" WHERE user_id = ? AND friend_id = ? ";
-    private static final String GET_COMMON_FRIENDS_BETWEEN_USERS = "SELECT u.* FROM \"user\" u " +
-            "JOIN (SELECT friend_id FROM \"friend\" WHERE user_id = ? " +
-            "INTERSECT SELECT friend_id FROM \"friend\" WHERE user_id = ?) " +
-            "common ON u.id = common.friend_id";
-    private static final String GET_ALL_FRIENDS_BY_USER_ID = "SELECT friend_id FROM \"friend\" WHERE user_id = ?";
+    private static final String GET_USER_BY_ID = """
+            SELECT * FROM "user" WHERE id = ?
+            """;
+    private static final String GET_ALL = """
+            SELECT * FROM "user"
+            """;
+    private static final String GET_FRIENDSHIP_STATUS_ID_BY_NAME = """
+            SELECT id FROM friendship_status
+            WHERE name IN (?)
+            """;
+    private static final String GET_FRIENDSHIP_STATUS_NAME_BY_ID = """
+            SELECT name FROM friendship_status
+            WHERE id = ?
+            """;
+    private static final String GET_FRIENDSHIP_STATUS_ID_BETWEEN_USERS = """
+            SELECT friendship_status_id
+            FROM "friend"
+            WHERE user_id = ? AND friend_id = ?
+            """;
+    private static final String GET_COMMON_FRIENDS_BETWEEN_USERS = """
+            SELECT u.* FROM "user" u
+            JOIN (
+                SELECT friend_id FROM "friend" WHERE user_id = ?
+                INTERSECT
+                SELECT friend_id FROM "friend" WHERE user_id = ?
+            ) common ON u.id = common.friend_id
+            """;
+    private static final String GET_ALL_FRIENDS_BY_USER_ID = """
+            SELECT friend_id FROM "friend" WHERE user_id = ?
+            """;
 
-    private static final String INSERT_USER = "INSERT INTO \"user\" (id, email, login, name, birthday)" +
-            " VALUES (?, ?, ?, ?, ?)";
-    private static final String INSERT_FRIEND_STATUS = "INSERT INTO \"friend\" " +
-            "(user_id, friend_id, friendship_status_id) VALUES (?, ?, ?)";
+    private static final String INSERT_USER = """
+            INSERT INTO "user" (id, email, login, name, birthday)
+            VALUES (?, ?, ?, ?, ?)
+            """;
+    private static final String INSERT_FRIEND_STATUS = """
+            INSERT INTO "friend" (user_id, friend_id, friendship_status_id)
+            VALUES (?, ?, ?)
+            """;
 
-    private static final String UPDATE_USER = "UPDATE \"user\" " +
-            "SET id = ?, email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
-    private static final String UPDATE_FRIENDSHIP_STATUS = "UPDATE \"friend\" " +
-            "SET user_id = ?, friend_id = ?, friendship_status_id = ? WHERE user_id = ? AND friend_id = ?";
+    private static final String UPDATE_USER = """
+            UPDATE "user"
+            SET email = ?, login = ?, name = ?, birthday = ?
+            WHERE id = ?
+            """;
+    private static final String UPDATE_FRIENDSHIP_STATUS = """
+            UPDATE "friend"
+            SET friendship_status_id = ?
+            WHERE user_id = ? AND friend_id = ?
+            """;
 
-    private static final String DELETE_USER_BY_ID = "DELETE FROM \"user\" WHERE id = ?";
-    private static final String DELETE_ALL_USERS = "DELETE FROM \"user\" ";
-    private static final String DELETE_ALL_FRIENDS_BY_USER_ID = "DELETE FROM \"friend\" WHERE user_id = ?";
-    private static final String DELETE_FRIENDS_BY_USER_AND_FRIEND_ID = "DELETE FROM \"friend\" " +
-            "WHERE user_id = ? AND friend_id = ?";
-    private static final String DELETE_ALL_FRIENDS = "DELETE FROM \"friend\" ";
+    private static final String DELETE_USER_BY_ID = """
+            DELETE FROM "user" WHERE id = ?
+            """;
+    private static final String DELETE_ALL_USERS = """
+            DELETE FROM "user"
+            """;
+    private static final String DELETE_LIKE_BY_ID = """
+            DELETE FROM "like" WHERE user_id = ?
+            """;
+    private static final String DELETE_ALL_LIKES = """
+            DELETE FROM "like"
+            """;
+    private static final String DELETE_ALL_FRIENDS_BY_USER_ID = """
+            DELETE FROM "friend" WHERE user_id = ?
+            """;
+    private static final String DELETE_FRIENDS_BY_USER_AND_FRIEND_ID = """
+            DELETE FROM "friend"
+            WHERE user_id = ? AND friend_id = ?
+            """;
+    private static final String DELETE_ALL_FRIENDS = """
+            DELETE FROM "friend"
+            """;
+
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -127,7 +171,6 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         User oldUser = get(user.getId());
 
         update(UPDATE_USER,
-                user.getId(),
                 user.getEmail(),
                 user.getLogin(),
                 user.getName(),
@@ -149,13 +192,17 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
                     // тут либо получать список всех друзей по friendId и смотреть, есть ли там user.getId()
                     // либо менее трудоёмко - получать статус дружбы между friendId и user.getId()
                     // таким образом сократил с трёх запросов за каждую итерацию цикла до одного - уже лучше
-                    getFriendshipStatus(friendId, user.getId());
+                    Long statusId = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_BY_NAME,
+                            Long.class, getFriendshipStatus(friendId, user.getId()).name());
 
-                    batchInsertUserFriend.add(new Object[]{user.getId(), friendId, FriendshipStatus.CONFIRMED});
-                    batchInsertFriendUser.add(new Object[]{friendId, user.getId(), FriendshipStatus.CONFIRMED});
+                    batchInsertUserFriend.add(new Object[]{user.getId(), friendId, statusId});
+                    batchInsertFriendUser.add(new Object[]{friendId, user.getId(), statusId});
                     batchDeleteFriendUserRelation.add(new Object[]{friendId, user.getId()});
                 } catch (EmptyResultDataAccessException e) {
-                    batchInsertUserFriend.add(new Object[]{user.getId(), friendId, FriendshipStatus.UNCONFIRMED});
+                    Long statusId = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_BY_NAME,
+                            Long.class, FriendshipStatus.UNCONFIRMED);
+
+                    batchInsertUserFriend.add(new Object[]{user.getId(), friendId, statusId});
                 }
             }
 
@@ -169,10 +216,9 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
 
     @Override
     public FriendshipStatus updateFriendshipStatus(Long id, Long friendId, FriendshipStatus friendshipStatus) {
+        Long statusId = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_BY_NAME, Long.class, friendshipStatus.name());
         update(UPDATE_FRIENDSHIP_STATUS,
-                id,
-                friendId,
-                friendshipStatus,
+                statusId,
                 id,
                 friendId);
 
@@ -182,16 +228,12 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     @Override
     @Transactional
     public boolean delete(Long id) {
+        deleteRelated(Optional.of(id));
         boolean deleteUser = deleteOne(DELETE_USER_BY_ID, id);
-        boolean deleteFriend = jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID, id) > 0;
 
         if (!deleteUser) {
             log.info("Произошла ошибка при удалении записи из таблицы user с id: {}", id);
             throw new InternalServerException("Произошла ошибка при удалении записи из таблицы user с id: " + id);
-        }
-        if (!deleteFriend) {
-            log.info("Произошла ошибка при удалении записи из таблицы friend с user_id: {}", id);
-            throw new InternalServerException("Произошла ошибка при удалении записи из таблицы friend с user_id: " + id);
         }
 
         return true;
@@ -200,16 +242,12 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     @Override
     @Transactional
     public boolean deleteAll() {
+        deleteRelated(Optional.empty());
         boolean deleteUser = deleteAll(DELETE_ALL_USERS);
-        boolean deleteFriend = jdbc.update(DELETE_ALL_FRIENDS) > 0;
 
         if (!deleteUser) {
             log.info("Произошла ошибка при удалении всех записей из таблицы user");
             throw new InternalServerException("Произошла ошибка при очистке таблицы user");
-        }
-        if (!deleteFriend) {
-            log.info("Произошла ошибка при удалении всех записей из таблицы friend");
-            throw new InternalServerException("Произошла ошибка при очистке таблицы friend");
         }
 
         return true;
@@ -227,5 +265,19 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         }
 
         return true;
+    }
+
+    private void deleteRelated(Optional<Long> userId) {
+        if (userId.isPresent()) {
+            jdbc.update(DELETE_LIKE_BY_ID, userId.get());
+            log.info("Были удалены все лайки из таблицы like от пользователя с id: {}", userId.get());
+            jdbc.update(DELETE_ALL_FRIENDS_BY_USER_ID, userId.get());
+            log.info("Были удалены все друзья из таблицы friend у пользователя с id: {}", userId.get());
+        } else {
+            jdbc.update(DELETE_ALL_LIKES);
+            log.info("Была очищена таблица like");
+            jdbc.update(DELETE_ALL_FRIENDS);
+            log.info("Была очищена таблица friend");
+        }
     }
 }
