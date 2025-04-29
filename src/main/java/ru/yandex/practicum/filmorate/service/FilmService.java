@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.BadRequestParamException;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -12,11 +11,12 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 
+import java.time.Year;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Optional;
-import java.util.Collection;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -24,6 +24,7 @@ import java.util.Collection;
 public class FilmService {
     private final FilmRepository filmRepository;
     private final UserService userService;
+    private final GenreService genreService;
     private final DirectorService directorService;
 
     public Film get(Long id) {
@@ -44,35 +45,34 @@ public class FilmService {
         return filmRepository.getAll();
     }
 
-    public Collection<Film> getPopular(int limit) {
+    public Collection<Film> getPopular(Long genreId, Year year) {
         validateFilmExists(Optional.empty(),
                 new NotFoundException("Таблица film пуста"),
                 "Попытка получить данные из таблицы film, которая пуста");
 
-        if (limit <= 0) {
-            log.info("Попытка получить список популярных фильмов c limit = {}", limit);
-            throw new BadRequestParamException("limit не может быть меньше или равен 0");
+        if (genreId != null) {
+            genreService.get(genreId);
         }
 
-        Collection<Film> result = filmRepository.getPopular(limit);
+        Collection<Film> result = filmRepository.getPopular(genreId, year);
         log.info("Получен список из {} наиболее популярных фильмов", result.size());
         return result;
     }
 
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        userService.get(userId);
+        userService.get(friendId);
+        return filmRepository.getCommonFilms(userId, friendId);
+    }
+
     public Collection<Film> getByDirector(Long directorId, String sortBy) {
         Director director = directorService.get(directorId);
-        Collection<Film> result;
+        log.info("Был получен список фильмоу у режиссёра с id: {}", directorId);
+        return filmRepository.getByDirector(directorId, sortBy);
+    }
 
-        switch (sortBy) {
-            case "year", "likes" -> result = filmRepository.getByDirector(directorId, sortBy);
-            default -> {
-                log.info("Попытка получить список фильмов по режиссёру с sortBy = {}", sortBy);
-                throw new BadRequestParamException("Был передан sortBy с неподдерживаемым типом сортировки: " + sortBy +
-                        ". Поддерживаются только year, likes");
-            }
-        }
-
-        return result;
+    public Collection<Film> search(String query, String by) {
+        return filmRepository.search(query, by);
     }
 
     public Film add(Film film) {
@@ -191,20 +191,5 @@ public class FilmService {
             log.info(logMessage);
             throw e;
         }
-    }
-
-    public Collection<Film> search(String query, String by) {
-        if (!by.contains("title") && !by.contains("director")) {
-            log.info("Попытка поиска с неподдерживаемым значением параметра by: {}", by);
-            throw new BadRequestParamException("Параметр by может принимать значения: title, director или оба значения через запятую");
-        }
-
-        return filmRepository.search(query, by);
-    }
-
-    public List<Film> getCommonFilms(long userId, long friendId) {
-        User user = userService.get(userId);
-        User friend = userService.get(friendId);
-        return filmRepository.getCommonFilms(user.getId(), friend.getId());
     }
 }
