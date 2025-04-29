@@ -56,11 +56,6 @@ public class FilmService {
             genreService.get(genreId);
         }
 
-        if (year != null && year.getValue() > Year.now().getValue()) {
-            log.info("Попытка получить список популярных фильмов c year = {}", year.toString());
-            throw new BadRequestParamException("year не может быть в будущем");
-        }
-
         Collection<Film> result = filmRepository.getPopular(limit, genreId, year);
         log.info("Получен список из {} наиболее популярных фильмов", result.size());
         return result;
