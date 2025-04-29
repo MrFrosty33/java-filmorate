@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import ru.yandex.practicum.filmorate.storage.dal.mapper.UserRowMapper;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -279,5 +280,29 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             jdbc.update(DELETE_ALL_FRIENDS);
             log.info("Была очищена таблица friend");
         }
+    }
+
+    @Override
+    public Map<Long, Set<Long>> getSimilarUserLikes(Long id) {
+        String sql = """
+                SELECT l.user_id,
+                       GROUP_CONCAT(l.film_id ORDER BY l.film_id) AS film_ids
+                FROM "like" l
+                WHERE l.user_id IN (
+                    SELECT DISTINCT l2.user_id
+                    FROM "like" l2
+                    WHERE l2.film_id IN (SELECT film_id FROM "like" WHERE user_id = ?)
+                )
+                GROUP BY l.user_id;
+                """;
+        Map<Long, Set<Long>> userLikes = new HashMap<>();
+        jdbc.query(sql, rs -> {
+            String filmIdsStr = rs.getString(2);
+            Set<Long> filmIds = Arrays.stream(filmIdsStr.split(","))
+                    .map(Long::valueOf)
+                    .collect(Collectors.toSet());
+            userLikes.put(rs.getLong(1), filmIds);
+        }, id);
+        return userLikes;
     }
 }

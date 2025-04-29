@@ -6,19 +6,28 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.List;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Optional;
+
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final FilmRepository filmRepository;
 
     public User get(Long id) {
         validateUserExists(Optional.of(id),
@@ -214,5 +223,49 @@ public class UserService {
             log.info(logMessage);
             throw e;
         }
+    }
+
+    public List<Film> getRecommendations(Long id) {
+        validateUserExists(Optional.of(id),
+                new NotFoundException("Не существует пользователь с id: " + id),
+                "Попытка получить несуществующего пользователя с id: " + id);
+
+        Map<Long, Set<Long>> similarUserLikes = userRepository.getSimilarUserLikes(id);
+        Set<Long> userLikes = similarUserLikes.get(id);
+        if(userLikes == null) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> mostSimilarUsers = getSimilarUserLikes(id, similarUserLikes);
+        Set<Long> recommendations = new HashSet<>();
+        for (Long userId : mostSimilarUsers) {
+            Set<Long> otherUserLikes = similarUserLikes.get(userId);
+            for (Long otherUserLike : otherUserLikes) {
+                if (!userLikes.contains(otherUserLike)) {
+                    recommendations.add(otherUserLike);
+                }
+            }
+        }
+        return filmRepository.getByListIds(recommendations);
+    }
+
+    private Set<Long> getSimilarUserLikes(Long userId, Map<Long, Set<Long>> userLikes) {
+        int maxIntersectionSize = 0;
+
+        Set<Long> mostSimilarUsers = new HashSet<>();
+        for(Map.Entry<Long, Set<Long>> entry : userLikes.entrySet()) {
+            if(entry.getKey().equals(userId)) continue;
+            Set<Long> otherUserLikes = entry.getValue();
+            Set<Long> intersection = new HashSet<>(userLikes.get(userId));
+            intersection.retainAll(otherUserLikes);
+            if(intersection.size() > maxIntersectionSize) {
+                maxIntersectionSize = intersection.size();
+                mostSimilarUsers.clear();
+                mostSimilarUsers.add(entry.getKey());
+            } else if (intersection.size() == maxIntersectionSize) {
+                mostSimilarUsers.add(entry.getKey());
+            }
+        }
+        return mostSimilarUsers;
     }
 }
