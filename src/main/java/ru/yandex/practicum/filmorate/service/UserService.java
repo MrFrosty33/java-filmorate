@@ -12,14 +12,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.List;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
 
 @Slf4j
@@ -232,7 +225,7 @@ public class UserService {
 
         Map<Long, Set<Long>> similarUserLikes = userRepository.getSimilarUserLikes(id);
         Set<Long> userLikes = similarUserLikes.get(id);
-        if(userLikes == null) {
+        if (userLikes == null) {
             return Collections.emptyList();
         }
 
@@ -253,12 +246,12 @@ public class UserService {
         int maxIntersectionSize = 0;
 
         Set<Long> mostSimilarUsers = new HashSet<>();
-        for(Map.Entry<Long, Set<Long>> entry : userLikes.entrySet()) {
-            if(entry.getKey().equals(userId)) continue;
+        for (Map.Entry<Long, Set<Long>> entry : userLikes.entrySet()) {
+            if (entry.getKey().equals(userId)) continue;
             Set<Long> otherUserLikes = entry.getValue();
             Set<Long> intersection = new HashSet<>(userLikes.get(userId));
             intersection.retainAll(otherUserLikes);
-            if(intersection.size() > maxIntersectionSize) {
+            if (intersection.size() > maxIntersectionSize) {
                 maxIntersectionSize = intersection.size();
                 mostSimilarUsers.clear();
                 mostSimilarUsers.add(entry.getKey());

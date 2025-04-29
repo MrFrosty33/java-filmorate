@@ -462,7 +462,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     @Override
-    public List<Film> getByListIds(Set<Long> ids){
+    public List<Film> getByListIds(Set<Long> ids) {
         String placeholders = ids.stream()
                 .map(id -> "?")
                 .collect(Collectors.joining(", "));
