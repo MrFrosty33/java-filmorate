@@ -385,6 +385,12 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     private void deleteRelated(Optional<Long> filmId) {
+        // здесь и далее во всех репозиториях:
+        // стоит ли ввести отслеживание, удалена ли запись?
+        // проблема в том, что записи может не быть, и если она не удалена в таком случае - это не ошибка
+        // придётся проверять, есть ли запись, и есть ли есть, удалять
+        // и только тогда уже, если ничего не удалено - выбрасывать ошибку
+        // но стоит ли грузить метод доп вызовами к БД?
         if (filmId.isPresent()) {
             jdbc.update(DELETE_ALL_LIKE_BY_FILM_ID, filmId.get());
             log.info("Были удалены все лайки из таблицы like у фильма с id: {}", filmId.get());
