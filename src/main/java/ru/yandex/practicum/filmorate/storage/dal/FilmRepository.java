@@ -63,19 +63,28 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             """;
     private static final String SEARCH_FILMS_BY_TITLE = """
             SELECT f.id FROM film f
+            LEFT JOIN "like" l ON l.film_id = f.id
             WHERE LOWER(f.name) LIKE LOWER(?)
+            GROUP BY f.id
+            ORDER BY COUNT(l.user_id) DESC
             """;
     private static final String SEARCH_FILMS_BY_DIRECTOR = """
             SELECT f.id FROM film f
             INNER JOIN film_director fd ON fd.film_id = f.id
             INNER JOIN director d ON d.id = fd.director_id
+            LEFT JOIN "like" l ON l.film_id = f.id
             WHERE LOWER(d.name) LIKE LOWER(?)
+            GROUP BY f.id
+            ORDER BY COUNT(l.user_id) DESC
             """;
     private static final String SEARCH_FILMS_BY_TITLE_AND_DIRECTOR = """
             SELECT f.id FROM film f
             LEFT JOIN film_director fd ON fd.film_id = f.id
             LEFT JOIN director d ON d.id = fd.director_id
+            LEFT JOIN "like" l ON l.film_id = f.id
             WHERE LOWER(f.name) LIKE LOWER(?) OR LOWER(d.name) LIKE LOWER(?)
+            GROUP BY f.id
+            ORDER BY COUNT(l.user_id) DESC
             """;
     private static final String GET_COMMON_FILMS = """
             SELECT f.id, f.name, f.release_date, f.description, f.duration
