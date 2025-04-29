@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.BadRequestParamException;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -13,7 +12,11 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 
 import java.time.Year;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -42,39 +45,30 @@ public class FilmService {
         return filmRepository.getAll();
     }
 
-    public Collection<Film> getPopular(int limit, Long genreId, Year year) {
+    public Collection<Film> getPopular(Long genreId, Year year) {
         validateFilmExists(Optional.empty(),
                 new NotFoundException("Таблица film пуста"),
                 "Попытка получить данные из таблицы film, которая пуста");
-
-        if (limit <= 0) {
-            log.info("Попытка получить список популярных фильмов c limit = {}", limit);
-            throw new BadRequestParamException("limit не может быть меньше или равен 0");
-        }
 
         if (genreId != null) {
             genreService.get(genreId);
         }
 
-        Collection<Film> result = filmRepository.getPopular(limit, genreId, year);
+        Collection<Film> result = filmRepository.getPopular(genreId, year);
         log.info("Получен список из {} наиболее популярных фильмов", result.size());
         return result;
     }
 
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        userService.get(userId);
+        userService.get(friendId);
+        return filmRepository.getCommonFilms(userId, friendId);
+    }
+
     public Collection<Film> getByDirector(Long directorId, String sortBy) {
         Director director = directorService.get(directorId);
-        Collection<Film> result;
-
-        switch (sortBy) {
-            case "year", "likes" -> result = filmRepository.getByDirector(directorId, sortBy);
-            default -> {
-                log.info("Попытка получить список фильмов по режиссёру с sortBy = {}", sortBy);
-                throw new BadRequestParamException("Был передан sortBy с неподдерживаемым типом сортировки: " + sortBy +
-                        ". Поддерживаются только year, likes");
-            }
-        }
-
-        return result;
+        log.info("Был получен список фильмоу у режиссёра с id: {}", directorId);
+        return filmRepository.getByDirector(directorId, sortBy);
     }
 
     public Film add(Film film) {
@@ -193,11 +187,5 @@ public class FilmService {
             log.info(logMessage);
             throw e;
         }
-    }
-
-    public List<Film> getCommonFilms(long userId, long friendId) {
-        userService.get(userId);
-        userService.get(friendId);
-        return filmRepository.getCommonFilms(userId, friendId);
     }
 }

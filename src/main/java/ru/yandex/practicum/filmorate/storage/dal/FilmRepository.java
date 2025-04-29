@@ -14,7 +14,12 @@ import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.time.Year;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Repository
@@ -49,7 +54,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             AND EXTRACT(YEAR FROM f.release_date) = ?
             GROUP BY f.id
             ORDER BY COUNT(l.user_id) DESC
-            LIMIT ?
             """;
     private static final String GET_POPULAR_ID_BY_GENRE = """
             SELECT f.id
@@ -59,7 +63,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             WHERE fg.genre_id = ?
             GROUP BY f.id
             ORDER BY COUNT(l.user_id) DESC
-            LIMIT ?
             """;
     private static final String GET_POPULAR_ID_BY_YEAR = """
             SELECT f.id
@@ -69,7 +72,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             WHERE EXTRACT(YEAR FROM f.release_date) = ?
             GROUP BY f.id
             ORDER BY COUNT(l.user_id) DESC
-            LIMIT ?
             """;
     private static final String GET_POPULAR_ID = """
             SELECT f.id
@@ -77,7 +79,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             LEFT JOIN "like" l ON f.id = l.film_id
             GROUP BY f.id
             ORDER BY COUNT(l.user_id) DESC
-            LIMIT ?
             """;
     private static final String GET_FILMS_BY_DIRECTOR_ID_ORDER_BY_YEAR = """
             SELECT f.id FROM film f
@@ -178,18 +179,18 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     @Override
-    public Collection<Film> getPopular(int limit, Long genreId, Year year) {
+    public Collection<Film> getPopular(Long genreId, Year year) {
         Collection<Long> popularIds;
         Collection<Film> result = new ArrayList<>();
         if (genreId == null && year == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID, Long.class, limit);
+            popularIds = jdbc.queryForList(GET_POPULAR_ID, Long.class);
         } else if (genreId == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_YEAR, Long.class, year.getValue(), limit);
+            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_YEAR, Long.class, year.getValue());
         } else if (year == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_GENRE, Long.class, genreId, limit);
+            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_GENRE, Long.class, genreId);
         } else {
             popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_GENRE_AND_YEAR,
-                    Long.class, genreId, year.getValue(), limit);
+                    Long.class, genreId, year.getValue());
         }
 
         for (Long id : popularIds) {
