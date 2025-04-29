@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.dto.GenreDto;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @Slf4j
 @Repository
@@ -81,38 +82,37 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
 
     @Override
     public boolean delete(Long id) {
+        deleteRelated(Optional.of(id));
         boolean deleteGenre = deleteOne(DELETE_GENRE_BY_ID, id);
-        boolean deleteFilmGenre = jdbc.update(DELETE_FILM_GENRE_BY_GENRE_ID, id) > 0;
 
         if (!deleteGenre) {
             log.info("Произошла ошибка при удалении записи из таблицы genre с id: {}", id);
             throw new InternalServerException("Произошла ошибка при удалении жанра с id: " + id);
         }
 
-//        if (!deleteFilmGenre) {
-//            log.info("Произошла ошибка при удалении записей из таблицы film_genre с genre_id: {}", id);
-//            throw new InternalServerException("Произошла ошибка при удалении связи film_genre с genre_id: " + id);
-//        }
-
         return true;
     }
 
     @Override
     public boolean deleteAll() {
-        // если удалять все жанры, то удалять и все связи фильм-жанр
+        deleteRelated(Optional.empty());
         boolean deleteGenre = deleteAll(DELETE_ALL_GENRES);
-        boolean deleteFilmGenre = jdbc.update(DELETE_FILM_GENRE) > 0;
 
         if (!deleteGenre) {
             log.info("Произошла ошибка при удалении всех записей из таблицы genre");
             throw new InternalServerException("Произошла ошибка при удалении всех записей из таблицы genre");
         }
 
-        if (!deleteFilmGenre) {
-            log.info("Произошла ошибка при удалении всех записей из таблицы film_genre");
-            throw new InternalServerException("Произошла ошибка при удалении всех записей из таблицы film_genre");
-        }
-
         return true;
+    }
+
+    private void deleteRelated(Optional<Long> genreId) {
+        if (genreId.isPresent()) {
+            jdbc.update(DELETE_FILM_GENRE_BY_GENRE_ID, genreId.get());
+            log.info("Были удалены все записи из таблицы film_genre у жанра с id: {}", genreId.get());
+        } else {
+            jdbc.update(DELETE_FILM_GENRE);
+            log.info("Была очищена таблица film_genre");
+        }
     }
 }

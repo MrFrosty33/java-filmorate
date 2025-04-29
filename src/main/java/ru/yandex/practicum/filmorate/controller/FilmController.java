@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -74,5 +75,10 @@ public class FilmController {
     @GetMapping("/search")
     public Collection<Film> search(@RequestParam String query, @RequestParam String by) {
         return filmService.search(query, by);
+    }
+
+    @GetMapping(value = "/common")
+    public List<Film> getCommonFilms(@RequestParam long userId, @RequestParam long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
     }
 }

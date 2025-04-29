@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 import ru.yandex.practicum.filmorate.storage.RatingMpaStorage;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @Slf4j
 @Repository
@@ -81,37 +82,37 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
 
     @Override
     public boolean delete(Long id) {
+        deleteRelated(Optional.of(id));
         boolean deleteRating = deleteOne(DELETE_RATING_BY_ID, id);
-        boolean deleteFilmRating = jdbc.update(DELETE_FILM_RATING_BY_RATING_ID, id) > 0;
 
         if (!deleteRating) {
             log.info("Произошла ошибка при удалении записи из таблицы rating с id: {}", id);
             throw new InternalServerException("Произошла ошибка при удалении рейтинга с id: " + id);
         }
 
-//        if (!deleteFilmRating) {
-//            log.info("Произошла ошибка при удалении записей из таблицы film_rating с rating_id: {}", id);
-//            throw new InternalServerException("Произошла ошибка при удалении связи film_rating с rating_id: " + id);
-//        }
-
         return true;
     }
 
     @Override
     public boolean deleteAll() {
+        deleteRelated(Optional.empty());
         boolean deleteRating = deleteAll(DELETE_ALL_RATINGS);
-        boolean deleteFilmRating = jdbc.update(DELETE_FILM_RATING) > 0;
 
         if (!deleteRating) {
             log.info("Произошла ошибка при удалении всех записей из таблицы rating");
             throw new InternalServerException("Произошла ошибка при удалении всех записей из таблицы rating");
         }
 
-        if (!deleteFilmRating) {
-            log.info("Произошла ошибка при удалении всех записей из таблицы film_rating");
-            throw new InternalServerException("Произошла ошибка при удалении всех записей из таблицы film_rating");
-        }
-
         return true;
+    }
+
+    private void deleteRelated(Optional<Long> ratingId) {
+        if (ratingId.isPresent()) {
+            jdbc.update(DELETE_FILM_RATING_BY_RATING_ID, ratingId.get());
+            log.info("Были удалены все записи из таблицы film_rating у рейтинга с id: {}", ratingId.get());
+        } else {
+            jdbc.update(DELETE_FILM_RATING);
+            log.info("Была очищена таблица film_rating");
+        }
     }
 }
