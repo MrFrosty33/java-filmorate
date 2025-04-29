@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -70,6 +71,11 @@ public class FilmController {
     @DeleteMapping
     public void deleteAll() {
         filmService.deleteAll();
+    }
+
+    @GetMapping("/search")
+    public Collection<Film> search(@RequestParam @NotNull String query, @RequestParam @NotNull String by) {
+        return filmService.search(query, by);
     }
 
     @GetMapping(value = "/common")
