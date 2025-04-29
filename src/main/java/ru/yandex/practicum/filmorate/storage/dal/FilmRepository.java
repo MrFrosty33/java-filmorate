@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -458,5 +459,16 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     @Override
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         return jdbc.query(GET_COMMON_FILMS, mapper, userId, friendId);
+    }
+
+    @Override
+    public List<Film> getByListIds(Set<Long> ids){
+        String placeholders = ids.stream()
+                .map(id -> "?")
+                .collect(Collectors.joining(", "));
+
+        String sql = "SELECT id, name, description, release_date, duration " +
+                "FROM film WHERE id IN (" + placeholders + ")";
+        return findMany(sql, ids.toArray());
     }
 }
