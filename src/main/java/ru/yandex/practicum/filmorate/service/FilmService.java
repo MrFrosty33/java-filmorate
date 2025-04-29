@@ -213,6 +213,8 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(long userId, long friendId) {
-        return filmRepository.getCommonFilms(userId, friendId);
+        User user = userService.get(userId);
+        User friend = userService.get(friendId);
+        return filmRepository.getCommonFilms(user.getId(), friend.getId());
     }
 }
