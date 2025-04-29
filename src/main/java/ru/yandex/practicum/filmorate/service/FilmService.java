@@ -71,6 +71,10 @@ public class FilmService {
         return filmRepository.getByDirector(directorId, sortBy);
     }
 
+    public Collection<Film> search(String query, String by) {
+        return filmRepository.search(query, by);
+    }
+
     public Film add(Film film) {
         if (film.getLikes() == null) {
             film.setLikes(new HashSet<>());
@@ -187,20 +191,5 @@ public class FilmService {
             log.info(logMessage);
             throw e;
         }
-    }
-
-    public Collection<Film> search(String query, String by) {
-        if (!by.contains("title") && !by.contains("director")) {
-            log.info("Попытка поиска с неподдерживаемым значением параметра by: {}", by);
-            throw new BadRequestParamException("Параметр by может принимать значения: title, director или оба значения через запятую");
-        }
-
-        return filmRepository.search(query, by);
-    }
-
-    public List<Film> getCommonFilms(long userId, long friendId) {
-        User user = userService.get(userId);
-        User friend = userService.get(friendId);
-        return filmRepository.getCommonFilms(user.getId(), friend.getId());
     }
 }

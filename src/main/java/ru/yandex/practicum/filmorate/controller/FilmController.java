@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,9 +66,23 @@ public class FilmController {
         }
     }
 
+    @GetMapping(value = "/common")
+    public List<Film> getCommonFilms(@RequestParam long userId, @RequestParam long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
+
     @GetMapping
     public Collection<Film> getAll() {
         return filmService.getAll();
+    }
+
+    @GetMapping("/search")
+    public Collection<Film> search(@RequestParam @NotNull String query, @RequestParam @NotNull String by) {
+        if (!by.contains("title") && !by.contains("director")) {
+            log.info("Попытка поиска с неподдерживаемым значением параметра by: {}", by);
+            throw new BadRequestParamException("Параметр by может принимать значения: title, director или оба значения через запятую");
+        }
+        return filmService.search(query, by);
     }
 
     @PostMapping
@@ -104,15 +119,5 @@ public class FilmController {
     @DeleteMapping
     public void deleteAll() {
         filmService.deleteAll();
-    }
-
-    @GetMapping("/search")
-    public Collection<Film> search(@RequestParam @NotNull String query, @RequestParam @NotNull String by) {
-        return filmService.search(query, by);
-    }
-
-    @GetMapping(value = "/common")
-    public List<Film> getCommonFilms(@RequestParam long userId, @RequestParam long friendId) {
-        return filmService.getCommonFilms(userId, friendId);
     }
 }
