@@ -312,6 +312,7 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
                     .collect(Collectors.toSet());
             userLikes.put(rs.getLong(1), filmIds);
         }, id);
+        log.info("Получен список пользователей и их любимых фильмов схожих по интересам с пользователем id: {}", id);
         return userLikes;
     }
 }

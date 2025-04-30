@@ -245,6 +245,7 @@ public class UserService {
                 }
             }
         }
+        log.info("Получен список рекомендаций с id: {}", id);
         return filmRepository.getByListIds(recommendations);
     }
 
