@@ -50,6 +50,11 @@ public class UserController {
         return userService.getRecommendations(id);
     }
 
+    @GetMapping("/{id}/feed")
+    public List<UserEvent> getFeed(@PathVariable Long id) {
+        return userService.getFeed(id);
+    }
+
     @PostMapping
     public User add(@Valid @RequestBody User user) {
         return userService.add(user);
@@ -83,10 +88,5 @@ public class UserController {
     @DeleteMapping
     public void deleteAll() {
         userService.deleteAll();
-    }
-
-    @GetMapping("/{id}/feed")
-    public List<UserEvent> getFeed(@PathVariable Long id) {
-        return userService.getFeed(id);
     }
 }
