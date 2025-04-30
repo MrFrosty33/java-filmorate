@@ -205,19 +205,33 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     @Override
-    public Collection<Film> getPopular(Long genreId, Year year) {
+    public Collection<Film> getPopular(Long limit, Long genreId, Year year) {
         Collection<Long> popularIds;
         Collection<Film> result = new ArrayList<>();
+
+        String sql;
+        List<Object> params = new ArrayList<>();
+
         if (genreId == null && year == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID, Long.class);
+            sql = GET_POPULAR_ID;
         } else if (genreId == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_YEAR, Long.class, year.getValue());
+            sql = GET_POPULAR_ID_BY_YEAR;
+            params.add(year.getValue());
         } else if (year == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_GENRE, Long.class, genreId);
+            sql = GET_POPULAR_ID_BY_GENRE;
+            params.add(genreId);
         } else {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_GENRE_AND_YEAR,
-                    Long.class, genreId, year.getValue());
+            sql = GET_POPULAR_ID_BY_GENRE_AND_YEAR;
+            params.add(genreId);
+            params.add(year.getValue());
         }
+
+        if (limit != null) {
+            sql += " LIMIT ?";
+            params.add(limit);
+        }
+
+        popularIds = jdbc.queryForList(sql, Long.class, params.toArray());
 
         for (Long id : popularIds) {
             result.add(get(id));

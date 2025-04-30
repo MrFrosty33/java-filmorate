@@ -47,7 +47,7 @@ public class FilmService {
         return filmRepository.getAll();
     }
 
-    public Collection<Film> getPopular(Long genreId, Year year) {
+    public Collection<Film> getPopular(Long limit, Long genreId, Year year) {
         validateFilmExists(Optional.empty(),
                 new NotFoundException("Таблица film пуста"),
                 "Попытка получить данные из таблицы film, которая пуста");
@@ -56,8 +56,9 @@ public class FilmService {
             genreService.get(genreId);
         }
 
-        Collection<Film> result = filmRepository.getPopular(genreId, year);
-        log.info("Получен список из {} наиболее популярных фильмов", result.size());
+        Collection<Film> result = filmRepository.getPopular(limit, genreId, year);
+        if (limit == null) log.info("Получен список наиболее популярных фильмов");
+        else log.info("Получен список из {} наиболее популярных фильмов", limit);
         return result;
     }
 
