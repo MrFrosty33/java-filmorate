@@ -247,9 +247,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     @Override
     @Transactional
     public Film add(Film film) {
-        if (film.getId() == null) {
-            film.setId(nextIdByTable("film"));
-        }
+        film.setId(nextIdByTable("film"));
 
         insert(INSERT_FILM,
                 film.getId(),

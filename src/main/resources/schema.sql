@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS rating (
 );
 
 CREATE TABLE IF NOT EXISTS director (
-    id BIGINT  PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     name VARCHAR
 );
 

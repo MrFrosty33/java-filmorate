@@ -61,9 +61,7 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
 
     @Override
     public GenreDto add(GenreDto genre) {
-        if (genre.getId() == null) {
-            genre.setId(nextIdByTable("genre"));
-        }
+        genre.setId(nextIdByTable("genre"));
 
         insert(INSERT_GENRE,
                 genre.getId(),
