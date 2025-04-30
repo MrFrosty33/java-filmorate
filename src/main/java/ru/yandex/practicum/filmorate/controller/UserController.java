@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserEvent;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
@@ -47,6 +48,11 @@ public class UserController {
     @GetMapping("/{id}/recommendations")
     public List<Film> getRecommendations(@PathVariable Long id) {
         return userService.getRecommendations(id);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<UserEvent> getFeed(@PathVariable Long id) {
+        return userService.getFeed(id);
     }
 
     @PostMapping
