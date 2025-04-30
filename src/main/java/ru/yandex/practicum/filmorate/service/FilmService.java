@@ -7,13 +7,12 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Operation;
-
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 
 import java.time.Year;
 import java.util.Collection;
@@ -41,11 +40,9 @@ public class FilmService {
         return filmRepository.get(id);
     }
 
+    // в методах getAll & deleteAll была проверка на пустую таблицу и в таком случае выкидывалась NotFoundException
+    // вырезано, т.к. не проходит тесты
     public Collection<Film> getAll() {
-        validateFilmExists(Optional.empty(),
-                new NotFoundException("Таблица film пуста"),
-                "Попытка получить данные из таблицы film, которая пуста");
-
         log.info("Получен список всех фильмов");
         return filmRepository.getAll();
     }
@@ -72,7 +69,7 @@ public class FilmService {
 
     public Collection<Film> getByDirector(Long directorId, String sortBy) {
         Director director = directorService.get(directorId);
-        log.info("Был получен список фильмоу у режиссёра с id: {}", directorId);
+        log.info("Был получен список фильмов у режиссёра с id: {}", directorId);
         return filmRepository.getByDirector(directorId, sortBy);
     }
 
@@ -157,10 +154,6 @@ public class FilmService {
     }
 
     public void deleteAll() {
-        validateFilmExists(Optional.empty(),
-                new NotFoundException("Таблица film пуста"),
-                "Попытка очистить таблицу film, которая и так пуста");
-
         filmRepository.deleteAll();
         log.info("Таблица film была очищена");
     }
@@ -192,13 +185,14 @@ public class FilmService {
                     log.info(logMessage);
                     throw e;
                 }
-            } else {
-                Optional<Collection<Film>> result = Optional.ofNullable(filmRepository.getAll());
-                if (result.isPresent() && result.get().isEmpty()) {
-                    log.info(logMessage);
-                    throw e;
-                }
             }
+//            else {
+//                Optional<Collection<Film>> result = Optional.ofNullable(filmRepository.getAll());
+//                if (result.isPresent() && result.get().isEmpty()) {
+//                    log.info(logMessage);
+//                    throw e;
+//                }
+//            }
         } catch (EmptyResultDataAccessException ex) {
             log.info(logMessage);
             throw e;

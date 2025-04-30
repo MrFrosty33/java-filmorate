@@ -43,10 +43,6 @@ public class UserService {
     }
 
     public Collection<User> getAll() {
-        validateUserExists(Optional.empty(),
-                new NotFoundException("Таблица user пуста"),
-                "Попытка получить данные из таблицы user, которая пуста");
-
         log.info("Получен список всех пользователей");
         return userRepository.getAll();
     }
@@ -63,6 +59,60 @@ public class UserService {
         log.info("Получен список совместных друзей между пользователем с id: {} и другим пользователем с id: {}",
                 id, otherId);
         return userRepository.getCommonFriends(id, otherId);
+    }
+
+    public List<Film> getRecommendations(Long id) {
+        validateUserExists(Optional.of(id),
+                new NotFoundException("Не существует пользователь с id: " + id),
+                "Попытка получить несуществующего пользователя с id: " + id);
+
+        Map<Long, Set<Long>> similarUserLikes = userRepository.getSimilarUserLikes(id);
+        Set<Long> userLikes = similarUserLikes.get(id);
+        if (userLikes == null) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> mostSimilarUsers = getMostSimilarUsers(id, similarUserLikes);
+        Set<Long> recommendations = new HashSet<>();
+        for (Long userId : mostSimilarUsers) {
+            Set<Long> otherUserLikes = similarUserLikes.get(userId);
+            for (Long otherUserLike : otherUserLikes) {
+                if (!userLikes.contains(otherUserLike)) {
+                    recommendations.add(otherUserLike);
+                }
+            }
+        }
+        log.info("Получен список рекомендаций с id: {}", id);
+        return filmRepository.getByListIds(recommendations);
+    }
+
+    public List<UserEvent> getFeed(Long id) {
+        validateUserExists(Optional.of(id), new NotFoundException("Не существует пользователь с id: " + id),
+                "Попытка удалить несуществующего пользователя с id: " + id);
+
+        log.info("Получена лента событий пользователя с id: {}", id);
+        return feedRepository.getFeed(id);
+    }
+
+
+    private Set<Long> getMostSimilarUsers(Long userId, Map<Long, Set<Long>> userLikes) {
+        int maxIntersectionSize = 0;
+
+        Set<Long> mostSimilarUsers = new HashSet<>();
+        for (Map.Entry<Long, Set<Long>> entry : userLikes.entrySet()) {
+            if (entry.getKey().equals(userId)) continue;
+            Set<Long> otherUserLikes = entry.getValue();
+            Set<Long> intersection = new HashSet<>(userLikes.get(userId));
+            intersection.retainAll(otherUserLikes);
+            if (intersection.size() > maxIntersectionSize) {
+                maxIntersectionSize = intersection.size();
+                mostSimilarUsers.clear();
+                mostSimilarUsers.add(entry.getKey());
+            } else if (intersection.size() == maxIntersectionSize) {
+                mostSimilarUsers.add(entry.getKey());
+            }
+        }
+        return mostSimilarUsers;
     }
 
     public FriendshipStatus getFriendshipStatus(Long id, Long otherId) {
@@ -207,10 +257,6 @@ public class UserService {
     }
 
     public void deleteAll() {
-        validateUserExists(Optional.empty(),
-                new NotFoundException("Таблица user пуста"),
-                "Попытка очистить таблицу user, которая и так пуста");
-
         userRepository.deleteAll();
         log.info("Таблица user была очищена");
     }
@@ -224,70 +270,10 @@ public class UserService {
                     log.info(logMessage);
                     throw e;
                 }
-            } else {
-                Optional<Collection<User>> result = Optional.ofNullable(userRepository.getAll());
-                if (result.isPresent() && result.get().isEmpty()) {
-                    log.info(logMessage);
-                    throw e;
-                }
             }
         } catch (EmptyResultDataAccessException ex) {
             log.info(logMessage);
             throw e;
         }
-    }
-
-    public List<Film> getRecommendations(Long id) {
-        validateUserExists(Optional.of(id),
-                new NotFoundException("Не существует пользователь с id: " + id),
-                "Попытка получить несуществующего пользователя с id: " + id);
-
-        Map<Long, Set<Long>> similarUserLikes = userRepository.getSimilarUserLikes(id);
-        Set<Long> userLikes = similarUserLikes.get(id);
-        if (userLikes == null) {
-            return Collections.emptyList();
-        }
-
-        Set<Long> mostSimilarUsers = getMostSimilarUsers(id, similarUserLikes);
-        Set<Long> recommendations = new HashSet<>();
-        for (Long userId : mostSimilarUsers) {
-            Set<Long> otherUserLikes = similarUserLikes.get(userId);
-            for (Long otherUserLike : otherUserLikes) {
-                if (!userLikes.contains(otherUserLike)) {
-                    recommendations.add(otherUserLike);
-                }
-            }
-        }
-        log.info("Получен список рекомендаций с id: {}", id);
-        return filmRepository.getByListIds(recommendations);
-    }
-
-    public List<UserEvent> getFeed(Long id) {
-        validateUserExists(Optional.of(id), new NotFoundException("Не существует пользователь с id: " + id),
-                "Попытка удалить несуществующего пользователя с id: " + id);
-
-        log.info("Получена лента событий пользователя с id: {}", id);
-        return feedRepository.getFeed(id);
-    }
-
-
-    private Set<Long> getMostSimilarUsers(Long userId, Map<Long, Set<Long>> userLikes) {
-        int maxIntersectionSize = 0;
-
-        Set<Long> mostSimilarUsers = new HashSet<>();
-        for (Map.Entry<Long, Set<Long>> entry : userLikes.entrySet()) {
-            if (entry.getKey().equals(userId)) continue;
-            Set<Long> otherUserLikes = entry.getValue();
-            Set<Long> intersection = new HashSet<>(userLikes.get(userId));
-            intersection.retainAll(otherUserLikes);
-            if (intersection.size() > maxIntersectionSize) {
-                maxIntersectionSize = intersection.size();
-                mostSimilarUsers.clear();
-                mostSimilarUsers.add(entry.getKey());
-            } else if (intersection.size() == maxIntersectionSize) {
-                mostSimilarUsers.add(entry.getKey());
-            }
-        }
-        return mostSimilarUsers;
     }
 }

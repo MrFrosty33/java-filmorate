@@ -87,6 +87,16 @@ public class ReviewServiceImpl implements ReviewService {
         return updated;
     }
 
+    private Review updateUsefulAndGetReview(Long reviewId) {
+        Review review = getReviewById(reviewId);
+        int likes = reviewRepository.countLikes(reviewId);
+        int dislikes = reviewRepository.countDislikes(reviewId);
+        review.setUseful(likes - dislikes);
+        Review updated = reviewRepository.save(review);
+        log.debug("Полезность отзыва {} обновлена: {}", reviewId, review.getUseful());
+        return updated;
+    }
+
     @Override
     @Transactional
     public void deleteReview(Long reviewId) {
@@ -199,16 +209,6 @@ public class ReviewServiceImpl implements ReviewService {
             log.warn("Пользователь {} не найден", userId);
             throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
-    }
-
-    private Review updateUsefulAndGetReview(Long reviewId) {
-        Review review = getReviewById(reviewId);
-        int likes = reviewRepository.countLikes(reviewId);
-        int dislikes = reviewRepository.countDislikes(reviewId);
-        review.setUseful(likes - dislikes);
-        Review updated = reviewRepository.save(review);
-        log.debug("Полезность отзыва {} обновлена: {}", reviewId, review.getUseful());
-        return updated;
     }
 
     private void validateUserAndFilm(Long userId, Long filmId) {

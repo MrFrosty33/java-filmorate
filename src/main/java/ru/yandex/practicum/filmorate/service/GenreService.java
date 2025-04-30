@@ -27,10 +27,6 @@ public class GenreService {
     }
 
     public Collection<GenreDto> getAll() {
-        validateGenreExists(Optional.empty(),
-                new NotFoundException("Таблица genre пуста"),
-                "Попытка получить данные из таблицы genre, которая пуста");
-
         log.info("Получен список всех жанров");
         return genreRepository.getAll();
     }
@@ -63,10 +59,6 @@ public class GenreService {
     }
 
     public void deleteAll() {
-        validateGenreExists(Optional.empty(),
-                new NotFoundException("Таблица genre пуста"),
-                "Попытка очистить таблицу genre, которая и так пуста");
-
         genreRepository.deleteAll();
         log.info("Таблица genre была очищена");
     }
@@ -77,12 +69,6 @@ public class GenreService {
             if (id.isPresent()) {
                 Optional<GenreDto> result = Optional.ofNullable(genreRepository.get(id.get()));
                 if (result.isEmpty()) {
-                    log.info(logMessage);
-                    throw e;
-                }
-            } else {
-                Optional<Collection<GenreDto>> result = Optional.ofNullable(genreRepository.getAll());
-                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }

@@ -27,10 +27,6 @@ public class RatingMpaService {
     }
 
     public Collection<RatingMpaDto> getAll() {
-        validateRatingExists(Optional.empty(),
-                new NotFoundException("Таблица rating пуста"),
-                "Попытка получить данные из таблицы rating, которая пуста");
-
         log.info("Получен список всех рейтингов");
         return ratingMpaRepository.getAll();
     }
@@ -63,10 +59,6 @@ public class RatingMpaService {
     }
 
     public void deleteAll() {
-        validateRatingExists(Optional.empty(),
-                new NotFoundException("Таблица rating пуста"),
-                "Попытка очистить таблицу rating, которая и так пуста");
-
         ratingMpaRepository.deleteAll();
         log.info("Таблица rating была очищена");
     }
@@ -77,12 +69,6 @@ public class RatingMpaService {
             if (id.isPresent()) {
                 Optional<RatingMpaDto> result = Optional.ofNullable(ratingMpaRepository.get(id.get()));
                 if (result.isEmpty()) {
-                    log.info(logMessage);
-                    throw e;
-                }
-            } else {
-                Optional<Collection<RatingMpaDto>> result = Optional.ofNullable(ratingMpaRepository.getAll());
-                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }
