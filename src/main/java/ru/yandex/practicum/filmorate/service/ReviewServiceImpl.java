@@ -105,9 +105,6 @@ public class ReviewServiceImpl implements ReviewService {
         } catch (DataIntegrityViolationException e) {
             log.warn("Пользователь {} уже оценил отзыв {}", userId, reviewId, e);
             throw new ConflictException("Пользователь уже оценил этот отзыв");
-        } catch (Exception e) {
-            log.error("Ошибка при добавлении лайка", e);
-            throw new RuntimeException("Внутренняя ошибка при добавлении лайка", e);
         }
     }
 
@@ -132,9 +129,6 @@ public class ReviewServiceImpl implements ReviewService {
         } catch (DataIntegrityViolationException e) {
             log.warn("Пользователь {} уже оценил отзыв {}", userId, reviewId, e);
             throw new ConflictException("Пользователь уже оценил этот отзыв");
-        } catch (Exception e) {
-            log.error("Ошибка при добавлении дизлайка", e);
-            throw new RuntimeException("Внутренняя ошибка при добавлении дизлайка", e);
         }
     }
 
@@ -179,7 +173,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private Review updateUsefulAndGetReview(Long reviewId) {
         Review review = getReviewById(reviewId);
-        int likes    = reviewRepository.countLikes(reviewId);
+        int likes = reviewRepository.countLikes(reviewId);
         int dislikes = reviewRepository.countDislikes(reviewId);
         review.setUseful(likes - dislikes);
         Review updated = reviewRepository.save(review);
