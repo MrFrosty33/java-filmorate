@@ -3,7 +3,14 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -35,6 +42,11 @@ public class UserController {
     @GetMapping("/{id}/friends")
     public Collection<User> getAllFriends(@PathVariable Long id) {
         return userService.getAllFriends(id);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getRecommendations(@PathVariable Long id) {
+        return userService.getRecommendations(id);
     }
 
     @PostMapping
@@ -70,10 +82,5 @@ public class UserController {
     @DeleteMapping
     public void deleteAll() {
         userService.deleteAll();
-    }
-
-    @GetMapping("/{id}/recommendations")
-    public List<Film> getRecommendations(@PathVariable Long id) {
-        return userService.getRecommendations(id);
     }
 }

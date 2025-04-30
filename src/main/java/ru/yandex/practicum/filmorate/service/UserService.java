@@ -12,8 +12,14 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
-import java.util.*;
-
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -229,7 +235,7 @@ public class UserService {
             return Collections.emptyList();
         }
 
-        Set<Long> mostSimilarUsers = getSimilarUserLikes(id, similarUserLikes);
+        Set<Long> mostSimilarUsers = getMostSimilarUsers(id, similarUserLikes);
         Set<Long> recommendations = new HashSet<>();
         for (Long userId : mostSimilarUsers) {
             Set<Long> otherUserLikes = similarUserLikes.get(userId);
@@ -242,7 +248,7 @@ public class UserService {
         return filmRepository.getByListIds(recommendations);
     }
 
-    private Set<Long> getSimilarUserLikes(Long userId, Map<Long, Set<Long>> userLikes) {
+    private Set<Long> getMostSimilarUsers(Long userId, Map<Long, Set<Long>> userLikes) {
         int maxIntersectionSize = 0;
 
         Set<Long> mostSimilarUsers = new HashSet<>();
