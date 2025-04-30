@@ -1,13 +1,24 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "reviews")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,9 +41,7 @@ public class Review {
     @Column(name = "film_id", nullable = false)
     private Long filmId;
 
+    @Builder.Default
     @Column(name = "useful", nullable = false)
     private Integer useful = 0;
-
-    public Review() {
-    }
 }

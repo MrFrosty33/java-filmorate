@@ -24,76 +24,58 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Review getReviewById(Long reviewId) {
-        if (reviewId == null) {
-            log.warn("Идентификатор отзыва null");
-            throw new IllegalArgumentException("Идентификатор отзыва не может быть null");
-        }
-        Review review = reviewRepository.findById(reviewId)
+        return reviewRepository.findById(reviewId)
                 .orElseThrow(() -> {
                     log.warn("Отзыв с id {} не найден", reviewId);
                     return new NotFoundException("Отзыв с id " + reviewId + " не найден");
                 });
-        log.debug("Получен отзыв с id {}", reviewId);
-        return review;
     }
 
     @Override
     public List<Review> getReviewsByFilmId(Long filmId, int count) {
-        if (count < 0) {
-            log.warn("Количество отзывов {} отрицательное", count);
-            throw new IllegalArgumentException("Количество отзывов не может быть отрицательным");
-        }
-        if (filmId == null) {
-            log.debug("Получение всех отзывов с лимитом {}", count);
-            return reviewRepository.findAll().stream().limit(count).toList();
-        }
-        if (filmStorage.get(filmId) == null) {
+        if (filmId != null && filmStorage.get(filmId) == null) {
             log.warn("Фильм с id {} не найден", filmId);
             throw new NotFoundException("Фильм с id " + filmId + " не найден");
         }
-        log.debug("Получение отзывов для фильма с id {} с лимитом {}", filmId, count);
-        return reviewRepository.findByFilmId(filmId).stream().limit(count).toList();
+
+        List<Review> all = (filmId == null)
+                ? reviewRepository.findAll()
+                : reviewRepository.findByFilmId(filmId);
+
+        return all.stream()
+                .limit(count)
+                .toList();
     }
 
     @Override
     @Transactional
     public Review addReview(Review review) {
-        if (review == null || review.getUserId() == null || review.getFilmId() == null || review.getIsPositive() == null) {
-            log.warn("Отзыв или его обязательные поля null");
-            throw new IllegalArgumentException("Отзыв или его обязательные поля не могут быть null");
-        }
         validateUserAndFilm(review.getUserId(), review.getFilmId());
         review.setUseful(0);
-        Review savedReview = reviewRepository.save(review);
-        log.info("Создан отзыв с id {}", savedReview.getReviewId());
-        return savedReview;
+        Review saved = reviewRepository.save(review);
+        log.info("Создан отзыв с id {}", saved.getReviewId());
+        return saved;
     }
 
     @Override
     @Transactional
     public Review updateReview(Review review) {
-        if (review == null || review.getReviewId() == null) {
-            log.warn("Отзыв или его идентификатор null");
-            throw new IllegalArgumentException("Отзыв или его идентификатор не могут быть null");
-        }
-        Review existingReview = getReviewById(review.getReviewId());
+        Review existing = getReviewById(review.getReviewId());
         validateUserAndFilm(review.getUserId(), review.getFilmId());
-        existingReview.setContent(review.getContent());
-        existingReview.setIsPositive(review.getIsPositive());
-        existingReview.setUserId(review.getUserId());
-        existingReview.setFilmId(review.getFilmId());
-        Review updatedReview = reviewRepository.save(existingReview);
-        log.info("Обновлён отзыв с id {}", updatedReview.getReviewId());
-        return updatedReview;
+
+        existing.setContent(review.getContent());
+        existing.setIsPositive(review.getIsPositive());
+        existing.setUserId(review.getUserId());
+        existing.setFilmId(review.getFilmId());
+
+        Review updated = reviewRepository.save(existing);
+        log.info("Обновлён отзыв с id {}", updated.getReviewId());
+        return updated;
     }
 
     @Override
     @Transactional
     public void deleteReview(Long reviewId) {
-        if (reviewId == null) {
-            log.warn("Идентификатор отзыва null");
-            throw new IllegalArgumentException("Идентификатор отзыва не может быть null");
-        }
         if (!reviewRepository.existsById(reviewId)) {
             log.warn("Отзыв с id {} не найден", reviewId);
             throw new NotFoundException("Отзыв с id " + reviewId + " не найден");
@@ -105,128 +87,113 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional
     public Review addLike(Long reviewId, Long userId) {
-        if (reviewId == null || userId == null) {
-            log.warn("Идентификатор отзыва или пользователя null");
-            throw new IllegalArgumentException("Идентификатор отзыва или пользователя не может быть null");
-        }
         validateReviewAndUser(reviewId, userId);
+
         try {
             if (reviewRepository.hasLike(reviewId, userId)) {
-                log.debug("Лайк уже существует для отзыва с id {} от пользователя с id {}", reviewId, userId);
+                log.debug("Лайк уже существует для отзыва {} от пользователя {}", reviewId, userId);
                 return getReviewById(reviewId);
             }
             if (reviewRepository.hasDislike(reviewId, userId)) {
                 reviewRepository.deleteDislike(reviewId, userId);
-                log.debug("Удалён дизлайк для отзыва с id {} от пользователя с id {}", reviewId, userId);
+                log.debug("Удалён дизлайк для отзыва {} от пользователя {}", reviewId, userId);
             }
             reviewRepository.addLike(reviewId, userId);
-            log.info("Добавлен лайк для отзыва с id {} от пользователя с id {}", reviewId, userId);
+            log.info("Добавлен лайк для отзыва {} от пользователя {}", reviewId, userId);
             return updateUsefulAndGetReview(reviewId);
+
         } catch (DataIntegrityViolationException e) {
-            log.warn("Конфликт при добавлении лайка для отзыва с id {} от пользователя с id {}", reviewId, userId, e);
+            log.warn("Пользователь {} уже оценил отзыв {}", userId, reviewId, e);
             throw new ConflictException("Пользователь уже оценил этот отзыв");
         } catch (Exception e) {
-            log.error("Ошибка при добавлении лайка для отзыва с id {} от пользователя с id {}", reviewId, userId, e);
-            throw new RuntimeException("Внутренняя ошибка сервера при добавлении лайка", e);
+            log.error("Ошибка при добавлении лайка", e);
+            throw new RuntimeException("Внутренняя ошибка при добавлении лайка", e);
         }
     }
 
     @Override
     @Transactional
     public Review addDislike(Long reviewId, Long userId) {
-        if (reviewId == null || userId == null) {
-            log.warn("Идентификатор отзыва или пользователя null");
-            throw new IllegalArgumentException("Идентификатор отзыва или пользователя не могут быть null");
-        }
         validateReviewAndUser(reviewId, userId);
+
         try {
             if (reviewRepository.hasDislike(reviewId, userId)) {
-                log.debug("Дизлайк уже существует для отзыва с id {} от пользователя с id {}", reviewId, userId);
+                log.debug("Дизлайк уже существует для отзыва {} от пользователя {}", reviewId, userId);
                 return getReviewById(reviewId);
             }
             if (reviewRepository.hasLike(reviewId, userId)) {
                 reviewRepository.deleteLike(reviewId, userId);
-                log.debug("Удалён лайк для отзыва с id {} от пользователя с id {}", reviewId, userId);
+                log.debug("Удалён лайк для отзыва {} от пользователя {}", reviewId, userId);
             }
             reviewRepository.addDislike(reviewId, userId);
-            log.info("Добавлен дизлайк для отзыва с id {} от пользователя с id {}", reviewId, userId);
+            log.info("Добавлен дизлайк для отзыва {} от пользователя {}", reviewId, userId);
             return updateUsefulAndGetReview(reviewId);
+
         } catch (DataIntegrityViolationException e) {
-            log.warn("Конфликт при добавлении дизлайка для отзыва с id {} от пользователя с id {}", reviewId, userId, e);
+            log.warn("Пользователь {} уже оценил отзыв {}", userId, reviewId, e);
             throw new ConflictException("Пользователь уже оценил этот отзыв");
         } catch (Exception e) {
-            log.error("Ошибка при добавлении дизлайка для отзыва с id {} от пользователя с id {}", reviewId, userId, e);
-            throw new RuntimeException("Внутренняя ошибка сервера при добавлении дизлайка", e);
+            log.error("Ошибка при добавлении дизлайка", e);
+            throw new RuntimeException("Внутренняя ошибка при добавлении дизлайка", e);
         }
     }
 
     @Override
     @Transactional
     public Review deleteLike(Long reviewId, Long userId) {
-        if (reviewId == null || userId == null) {
-            log.warn("Идентификатор отзыва или пользователя null");
-            throw new IllegalArgumentException("Идентификатор отзыва или пользователя не могут быть null");
-        }
         validateReviewAndUser(reviewId, userId);
+
         if (reviewRepository.hasLike(reviewId, userId)) {
             reviewRepository.deleteLike(reviewId, userId);
-            log.info("Удалён лайк для отзыва с id {} от пользователя с id {}", reviewId, userId);
+            log.info("Удалён лайк для отзыва {} от пользователя {}", reviewId, userId);
             return updateUsefulAndGetReview(reviewId);
         }
-        log.debug("Лайк для отзыва с id {} от пользователя с id {} не найден", reviewId, userId);
+        log.debug("Лайк не найден для отзыва {} от пользователя {}", reviewId, userId);
         return getReviewById(reviewId);
     }
 
     @Override
     @Transactional
     public Review deleteDislike(Long reviewId, Long userId) {
-        if (reviewId == null || userId == null) {
-            log.warn("Идентификатор отзыва или пользователя null");
-            throw new IllegalArgumentException("Идентификатор отзыва или пользователя не могут быть null");
-        }
         validateReviewAndUser(reviewId, userId);
+
         if (reviewRepository.hasDislike(reviewId, userId)) {
             reviewRepository.deleteDislike(reviewId, userId);
-            log.info("Удалён дизлайк для отзыва с id {} от пользователя с id {}", reviewId, userId);
+            log.info("Удалён дизлайк для отзыва {} от пользователя {}", reviewId, userId);
             return updateUsefulAndGetReview(reviewId);
         }
-        log.debug("Дизлайк для отзыва с id {} от пользователя с id {} не найден", reviewId, userId);
+        log.debug("Дизлайк не найден для отзыва {} от пользователя {}", reviewId, userId);
         return getReviewById(reviewId);
     }
 
     private void validateReviewAndUser(Long reviewId, Long userId) {
         if (reviewRepository.findById(reviewId).isEmpty()) {
-            log.warn("Отзыв с id {} не найден", reviewId);
+            log.warn("Отзыв {} не найден", reviewId);
             throw new NotFoundException("Отзыв с id " + reviewId + " не найден");
         }
         if (userStorage.get(userId) == null) {
-            log.warn("Пользователь с id {} не найден", userId);
+            log.warn("Пользователь {} не найден", userId);
             throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
     }
 
     private Review updateUsefulAndGetReview(Long reviewId) {
         Review review = getReviewById(reviewId);
-        int likes = reviewRepository.countLikes(reviewId);
+        int likes    = reviewRepository.countLikes(reviewId);
         int dislikes = reviewRepository.countDislikes(reviewId);
         review.setUseful(likes - dislikes);
-        Review updatedReview = reviewRepository.save(review);
-        log.debug("Обновлена полезность отзыва с id {}: лайков {}, дизлайков {}, полезность {}",
-                reviewId, likes, dislikes, review.getUseful());
-        return updatedReview;
+        Review updated = reviewRepository.save(review);
+        log.debug("Полезность отзыва {} обновлена: {}", reviewId, review.getUseful());
+        return updated;
     }
 
     private void validateUserAndFilm(Long userId, Long filmId) {
-        if (userId == null || filmId == null) {
-            log.warn("Идентификатор пользователя или фильма null");
-            throw new IllegalArgumentException("Идентификатор пользователя или фильма не может быть null");
-        }
         if (userStorage.get(userId) == null) {
-            log.warn("Пользователь с id {} не найден", userId);
+            log.warn("Пользователь {} не найден", userId);
             throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
         if (filmStorage.get(filmId) == null) {
-            log.warn("Фильм с id {} не найден", filmId);
+            log.warn("Фильм {} не найден", filmId);
             throw new NotFoundException("Фильм с id " + filmId + " не найден");
         }
     }
