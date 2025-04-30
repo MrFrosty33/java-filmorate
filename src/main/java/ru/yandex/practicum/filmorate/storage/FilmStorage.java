@@ -34,8 +34,4 @@ public interface FilmStorage {
     boolean deleteLike(Long filmId, Long userId);
 
     Collection<Film> search(String query, String by);
-
-    List<Film> getCommonFilms(Long userId, Long friendId);
-
-    List<Film> getByListIds(Set<Long> ids);
 }
