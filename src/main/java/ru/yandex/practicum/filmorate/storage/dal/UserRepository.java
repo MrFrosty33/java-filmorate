@@ -12,7 +12,16 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 import ru.yandex.practicum.filmorate.storage.dal.mapper.UserRowMapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -46,6 +55,18 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             """;
     private static final String GET_ALL_FRIENDS_BY_USER_ID = """
             SELECT friend_id FROM "friend" WHERE user_id = ?
+            """;
+
+    private static final String GET_SIMILAR_USER_LIKES = """
+            SELECT l.user_id,
+                   GROUP_CONCAT(l.film_id ORDER BY l.film_id) AS film_ids
+            FROM "like" l
+            WHERE l.user_id IN (
+                SELECT DISTINCT l2.user_id
+                FROM "like" l2
+                WHERE l2.film_id IN (SELECT film_id FROM "like" WHERE user_id = ?)
+            )
+            GROUP BY l.user_id;
             """;
 
     private static final String INSERT_USER = """
@@ -279,5 +300,19 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             jdbc.update(DELETE_ALL_FRIENDS);
             log.info("Была очищена таблица friend");
         }
+    }
+
+    @Override
+    public Map<Long, Set<Long>> getSimilarUserLikes(Long id) {
+        Map<Long, Set<Long>> userLikes = new HashMap<>();
+        jdbc.query(GET_SIMILAR_USER_LIKES, rs -> {
+            String filmIdsStr = rs.getString(2);
+            Set<Long> filmIds = Arrays.stream(filmIdsStr.split(","))
+                    .map(Long::valueOf)
+                    .collect(Collectors.toSet());
+            userLikes.put(rs.getLong(1), filmIds);
+        }, id);
+        log.info("Получен список пользователей и их любимых фильмов схожих по интересам с пользователем id: {}", id);
+        return userLikes;
     }
 }
