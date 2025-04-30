@@ -10,6 +10,10 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
+
 
 import java.time.Year;
 import java.util.Collection;
@@ -26,6 +30,7 @@ public class FilmService {
     private final UserService userService;
     private final GenreService genreService;
     private final DirectorService directorService;
+    private final FeedStorage feedRepository;
 
     public Film get(Long id) {
         validateFilmExists(Optional.of(id),
@@ -104,6 +109,10 @@ public class FilmService {
         Set<Long> likes = filmRepository.addLike(filmId, userId);
 
         log.info("Фильму с id: {} был поставлен лайк от пользователя с id: {}", filmId, userId);
+
+        feedRepository.addEventToFeed(userId, EventType.LIKE, Operation.ADD, filmId);
+        log.info("Событие добавлено в ленту: пользователь с id: {} лайкнул фильм с id: {}", userId, filmId);
+
         return likes;
     }
 
@@ -164,6 +173,9 @@ public class FilmService {
             filmRepository.deleteLike(filmId, userId);
             log.info("У фильма с id: {} был удалён лайк от пользователя с id: {}",
                     filmId, userId);
+
+            feedRepository.addEventToFeed(userId, EventType.LIKE, Operation.REMOVE, filmId);
+            log.info("Событие добавлено в ленту: пользователь с id: {} удалил лайк у фильма с id: {}", userId, filmId);
         } else {
             log.info("Попытка удалить у фильма с id: {} несуществующий лайк от пользователя с id: {}",
                     filmId, userId);

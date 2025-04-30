@@ -6,9 +6,13 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FriendshipStatus;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserEvent;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
@@ -27,6 +31,7 @@ import java.util.Set;
 public class UserService {
     private final UserRepository userRepository;
     private final FilmRepository filmRepository;
+    private final FeedStorage feedRepository;
 
     public User get(Long id) {
         validateUserExists(Optional.of(id),
@@ -134,12 +139,16 @@ public class UserService {
             userRepository.updateFriendshipStatus(friendId, id, status);
             log.info("В таблице friend была добавлена запись с id: {} и id: {}, со статусом: {}", id, friendId, status);
             userRepository.addFriend(id, friendId, status);
+
         } catch (EmptyResultDataAccessException e) {
             // если же нет таких записей, то добавляем дружбу пользователя А с Б со статусом UNCONFIRMED
             status = FriendshipStatus.UNCONFIRMED;
             log.info("В таблице friend была добавлена запись с id: {} и id: {}, со статусом: {}", id, friendId, status);
             userRepository.addFriend(id, friendId, status);
         }
+
+        feedRepository.addEventToFeed(id, EventType.FRIEND, Operation.ADD, friendId);
+        log.info("Событие добавлено в ленту: пользовател с id: {} добавил друга с id: {}", id, friendId);
 
         return userRepository.get(id);
     }
@@ -191,6 +200,10 @@ public class UserService {
 
         userRepository.deleteFriend(id, friendId);
         log.info("У пользователя с id: {} был удалён друг с id: {}", id, friendId);
+
+        feedRepository.addEventToFeed(id, EventType.FRIEND, Operation.REMOVE, friendId);
+        log.info("Событие добавлено в ленту: пользовател с id: {} удалил друга с id: {}", id, friendId);
+
     }
 
     public void deleteAll() {
@@ -248,6 +261,15 @@ public class UserService {
         log.info("Получен список рекомендаций с id: {}", id);
         return filmRepository.getByListIds(recommendations);
     }
+
+    public List<UserEvent> getFeed(Long id) {
+        validateUserExists(Optional.of(id), new NotFoundException("Не существует пользователь с id: " + id),
+                "Попытка удалить несуществующего пользователя с id: " + id);
+
+        log.info("Получена лента событий пользователя с id: {}", id);
+        return feedRepository.getFeed(id);
+    }
+
 
     private Set<Long> getMostSimilarUsers(Long userId, Map<Long, Set<Long>> userLikes) {
         int maxIntersectionSize = 0;
