@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.dal;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -205,19 +206,33 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     @Override
-    public Collection<Film> getPopular(Long genreId, Year year) {
+    public Collection<Film> getPopular(Long limit, Long genreId, Year year) {
         Collection<Long> popularIds;
         Collection<Film> result = new ArrayList<>();
+
+        String sql;
+        List<Object> params = new ArrayList<>();
+
         if (genreId == null && year == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID, Long.class);
+            sql = GET_POPULAR_ID;
         } else if (genreId == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_YEAR, Long.class, year.getValue());
+            sql = GET_POPULAR_ID_BY_YEAR;
+            params.add(year.getValue());
         } else if (year == null) {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_GENRE, Long.class, genreId);
+            sql = GET_POPULAR_ID_BY_GENRE;
+            params.add(genreId);
         } else {
-            popularIds = jdbc.queryForList(GET_POPULAR_ID_BY_GENRE_AND_YEAR,
-                    Long.class, genreId, year.getValue());
+            sql = GET_POPULAR_ID_BY_GENRE_AND_YEAR;
+            params.add(genreId);
+            params.add(year.getValue());
         }
+
+        if (limit != null) {
+            sql += " LIMIT ?";
+            params.add(limit);
+        }
+
+        popularIds = jdbc.queryForList(sql, Long.class, params.toArray());
 
         for (Long id : popularIds) {
             result.add(get(id));
@@ -247,9 +262,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     @Override
     @Transactional
     public Film add(Film film) {
-        if (film.getId() == null) {
-            film.setId(nextIdByTable("film"));
-        }
+        film.setId(nextIdByTable("film"));
 
         insert(INSERT_FILM,
                 film.getId(),
@@ -305,7 +318,11 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Set<Long> addLike(Long filmId, Long userId) {
+        try {
         insert(INSERT_LIKE, userId, filmId);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Пользователь уже лайкнул этот фильм");
+        }
         return get(filmId).getLikes();
     }
 

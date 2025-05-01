@@ -158,12 +158,10 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
 
     @Override
     public User add(User user) {
-        if (user.getId() == null) {
-            // Для БД нужно передавать значение с кавычками "user"
-            // Добавляю кавычки и проверяю возможность получения id из таблицы в методе BaseRepository
-            // Здесь, дабы читалось чуть проще, можно передавать просто user
-            user.setId(nextIdByTable("user"));
-        }
+        // Для БД нужно передавать значение с кавычками "user"
+        // Добавляю кавычки и проверяю возможность получения id из таблицы в методе BaseRepository
+        // Здесь, дабы читалось чуть проще, можно передавать просто user
+        user.setId(nextIdByTable("user"));
 
         insert(INSERT_USER,
                 user.getId(),

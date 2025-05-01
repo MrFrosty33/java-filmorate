@@ -28,10 +28,6 @@ public class DirectorService {
     }
 
     public Collection<Director> getAll() {
-        validateDirectorExists(Optional.empty(),
-                new NotFoundException("Таблица director пуста"),
-                "Попытка получить данные из таблицы director, которая пуста");
-
         log.info("Получен список всех режиссёров");
         return directorRepository.getAll();
     }
@@ -63,9 +59,6 @@ public class DirectorService {
     }
 
     public void deleteAll() {
-        validateDirectorExists(Optional.empty(),
-                new InternalServerException("Таблица director пуста"),
-                "Попытка очистить таблицу director, которая и так пуста");
 
         directorRepository.deleteAll();
         log.info("Таблица director была очищена");
@@ -77,12 +70,6 @@ public class DirectorService {
             if (id.isPresent()) {
                 Optional<Director> result = Optional.ofNullable(directorRepository.get(id.get()));
                 if (result.isEmpty()) {
-                    log.info(logMessage);
-                    throw e;
-                }
-            } else {
-                Optional<Collection<Director>> result = Optional.ofNullable(directorRepository.getAll());
-                if (result.isPresent() && result.get().isEmpty()) {
                     log.info(logMessage);
                     throw e;
                 }

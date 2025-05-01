@@ -13,7 +13,7 @@ public interface FilmStorage {
 
     Collection<Film> getAll();
 
-    Collection<Film> getPopular(Long genreId, Year year);
+    Collection<Film> getPopular(Long limit, Long genreId, Year year);
 
     Collection<Film> getByDirector(Long directorId, String sortBy);
 

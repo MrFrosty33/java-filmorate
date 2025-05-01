@@ -61,9 +61,8 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
 
     @Override
     public RatingMpaDto add(RatingMpaDto rating) {
-        if (rating.getId() == null) {
-            rating.setId(nextIdByTable("genre"));
-        }
+        rating.setId(nextIdByTable("genre"));
+
 
         insert(INSERT_RATING,
                 rating.getId(),

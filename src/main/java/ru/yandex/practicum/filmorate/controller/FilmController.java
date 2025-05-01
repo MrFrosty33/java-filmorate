@@ -37,12 +37,15 @@ public class FilmController {
 
     @GetMapping("/popular")
     public Collection<Film> getPopular(@RequestParam(required = false)
+                                           Long count,
+
+                                       @RequestParam(required = false)
                                        Long genreId,
 
                                        @RequestParam(required = false)
                                        @PastOrPresent(message = "year не может быть в будущем")
                                        Year year) {
-        return filmService.getPopular(genreId, year);
+        return filmService.getPopular(count, genreId, year);
     }
 
     @GetMapping("/director/{directorId}")
@@ -120,4 +123,5 @@ public class FilmController {
     public void deleteAll() {
         filmService.deleteAll();
     }
+
 }

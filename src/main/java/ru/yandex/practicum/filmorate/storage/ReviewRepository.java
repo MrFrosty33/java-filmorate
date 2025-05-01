@@ -38,4 +38,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query(value = "DELETE FROM review_likes WHERE review_id = :reviewId AND user_id = :userId AND is_like = false", nativeQuery = true)
     void deleteDislike(Long reviewId, Long userId);
 
+    @Modifying
+    @Query(value = "DELETE FROM review_likes WHERE review_id = :reviewId", nativeQuery = true)
+    void deleteAllLikesByReviewId(Long reviewId);
 }

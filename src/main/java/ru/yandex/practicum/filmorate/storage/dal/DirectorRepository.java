@@ -61,9 +61,7 @@ public class DirectorRepository extends BaseRepository<Director> implements Dire
 
     @Override
     public Director add(Director director) {
-        if (director.getId() == null) {
-            director.setId(nextIdByTable("director"));
-        }
+        director.setId(nextIdByTable("director"));
 
         insert(INSERT_DIRECTOR,
                 director.getId(),
