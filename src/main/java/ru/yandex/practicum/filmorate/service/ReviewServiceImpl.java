@@ -15,6 +15,7 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.ReviewRepository;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -47,6 +48,7 @@ public class ReviewServiceImpl implements ReviewService {
                 : reviewRepository.findByFilmId(filmId);
 
         return all.stream()
+                .sorted(Comparator.comparingInt(Review::getUseful).reversed())
                 .limit(count)
                 .toList();
     }
@@ -74,10 +76,10 @@ public class ReviewServiceImpl implements ReviewService {
 
         existing.setContent(review.getContent());
         existing.setIsPositive(review.getIsPositive());
-        existing.setUserId(review.getUserId());
-        existing.setFilmId(review.getFilmId());
 
         Review updated = reviewRepository.save(existing);
+        updated.setUseful(reviewRepository.countLikes(updated.getReviewId()) -
+                          reviewRepository.countDislikes(updated.getReviewId()));
         log.info("Обновлён отзыв с id {}", updated.getReviewId());
 
         feedRepository.addEventToFeed(updated.getUserId(), EventType.REVIEW, Operation.UPDATE, updated.getReviewId());
@@ -106,41 +108,36 @@ public class ReviewServiceImpl implements ReviewService {
                     return new NotFoundException("Отзыв с id " + reviewId + " не найден");
                 });
 
-        reviewRepository.deleteById(reviewId);
-        log.info("Удалён отзыв с id {}", reviewId);
-
+        reviewRepository.deleteAllLikesByReviewId(reviewId);
         feedRepository.addEventToFeed(existing.getUserId(), EventType.REVIEW, Operation.REMOVE, existing.getReviewId());
         log.info("Событие добавлено в ленту: пользователь с id: {} удалил отзыв с id: {}",
                 existing.getUserId(), reviewId);
+
+        reviewRepository.deleteById(reviewId);
+        log.info("Удалён отзыв с id {}", reviewId);
+
     }
 
     @Override
     @Transactional
     public Review addLike(Long reviewId, Long userId) {
         validateReviewAndUser(reviewId, userId);
-
-        try {
-            if (reviewRepository.hasLike(reviewId, userId)) {
-                log.debug("Лайк уже существует для отзыва {} от пользователя {}", reviewId, userId);
-                return getReviewById(reviewId);
-            }
-            if (reviewRepository.hasDislike(reviewId, userId)) {
-                reviewRepository.deleteDislike(reviewId, userId);
-                log.debug("Удалён дизлайк для отзыва {} от пользователя {}", reviewId, userId);
-            }
-            reviewRepository.addLike(reviewId, userId);
-            log.info("Добавлен лайк для отзыва {} от пользователя {}", reviewId, userId);
-
-            feedRepository.addEventToFeed(userId, EventType.LIKE, Operation.ADD, reviewId);
-            log.info("Событие добавлено в ленту: пользователь с id: {} лайкнул отзыв с id: {}",
-                    userId, reviewId);
-
-            return updateUsefulAndGetReview(reviewId);
-
-        } catch (DataIntegrityViolationException e) {
-            log.warn("Пользователь {} уже оценил отзыв {}", userId, reviewId, e);
-            throw new ConflictException("Пользователь уже оценил этот отзыв");
+        if (reviewRepository.hasLike(reviewId, userId)) {
+            log.debug("Лайк уже существует для отзыва {} от пользователя {}", reviewId, userId);
+            return getReviewById(reviewId);
         }
+        if (reviewRepository.hasDislike(reviewId, userId)) {
+            reviewRepository.deleteDislike(reviewId, userId);
+            log.debug("Удалён дизлайк для отзыва {} от пользователя {}", reviewId, userId);
+            return getReviewById(reviewId);
+        }
+        reviewRepository.addLike(reviewId, userId);
+        log.info("Добавлен лайк для отзыва {} от пользователя {}", reviewId, userId);
+
+        feedRepository.addEventToFeed(userId, EventType.LIKE, Operation.ADD, reviewId);
+        log.info("Событие добавлено в ленту: пользователь с id: {} лайкнул отзыв с id: {}",
+                userId, reviewId);
+        return updateUsefulAndGetReview(reviewId);
     }
 
     @Override
@@ -179,11 +176,9 @@ public class ReviewServiceImpl implements ReviewService {
             feedRepository.addEventToFeed(userId, EventType.LIKE, Operation.REMOVE, reviewId);
             log.info("Событие добавлено в ленту: пользователь с id: {} удалил лайк с отзыва с id: {}",
                     userId, reviewId);
-
-            return updateUsefulAndGetReview(reviewId);
         }
         log.debug("Лайк не найден для отзыва {} от пользователя {}", reviewId, userId);
-        return getReviewById(reviewId);
+        return updateUsefulAndGetReview(reviewId);
     }
 
     @Override
@@ -194,10 +189,9 @@ public class ReviewServiceImpl implements ReviewService {
         if (reviewRepository.hasDislike(reviewId, userId)) {
             reviewRepository.deleteDislike(reviewId, userId);
             log.info("Удалён дизлайк для отзыва {} от пользователя {}", reviewId, userId);
-            return updateUsefulAndGetReview(reviewId);
         }
         log.debug("Дизлайк не найден для отзыва {} от пользователя {}", reviewId, userId);
-        return getReviewById(reviewId);
+        return updateUsefulAndGetReview(reviewId);
     }
 
     private void validateReviewAndUser(Long reviewId, Long userId) {

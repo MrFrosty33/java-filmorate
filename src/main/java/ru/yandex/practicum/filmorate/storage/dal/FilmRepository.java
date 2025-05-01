@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.dal;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -317,7 +318,11 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Set<Long> addLike(Long filmId, Long userId) {
+        try {
         insert(INSERT_LIKE, userId, filmId);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Пользователь уже лайкнул этот фильм");
+        }
         return get(filmId).getLikes();
     }
 
