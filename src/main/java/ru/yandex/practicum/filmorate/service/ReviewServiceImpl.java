@@ -134,9 +134,6 @@ public class ReviewServiceImpl implements ReviewService {
         reviewRepository.addLike(reviewId, userId);
         log.info("Добавлен лайк для отзыва {} от пользователя {}", reviewId, userId);
 
-        feedRepository.addEventToFeed(userId, EventType.LIKE, Operation.ADD, reviewId);
-        log.info("Событие добавлено в ленту: пользователь с id: {} лайкнул отзыв с id: {}",
-                userId, reviewId);
         return updateUsefulAndGetReview(reviewId);
     }
 
