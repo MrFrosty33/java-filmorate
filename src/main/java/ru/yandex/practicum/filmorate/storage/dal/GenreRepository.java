@@ -5,7 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
-import ru.yandex.practicum.filmorate.model.dto.GenreDto;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
 import java.util.Collection;
@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Slf4j
 @Repository
-public class GenreRepository extends BaseRepository<GenreDto> implements GenreStorage {
+public class GenreRepository extends BaseRepository<Genre> implements GenreStorage {
     private static final String GET_ONE = """
             SELECT * FROM genre WHERE id = ?
             """;
@@ -45,22 +45,22 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
             """;
 
 
-    public GenreRepository(JdbcTemplate jdbc, RowMapper<GenreDto> mapper) {
+    public GenreRepository(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
         super(jdbc, mapper);
     }
 
     @Override
-    public GenreDto get(Long id) {
+    public Genre get(Long id) {
         return findOne(GET_ONE, id);
     }
 
     @Override
-    public Collection<GenreDto> getAll() {
+    public Collection<Genre> getAll() {
         return findMany(GET_ALL);
     }
 
     @Override
-    public GenreDto add(GenreDto genre) {
+    public Genre add(Genre genre) {
         genre.setId(nextIdByTable("genre"));
 
         insert(INSERT_GENRE,
@@ -71,7 +71,7 @@ public class GenreRepository extends BaseRepository<GenreDto> implements GenreSt
     }
 
     @Override
-    public GenreDto update(GenreDto genre) {
+    public Genre update(Genre genre) {
         update(UPDATE_GENRE,
                 genre.getName(),
                 genre.getId());

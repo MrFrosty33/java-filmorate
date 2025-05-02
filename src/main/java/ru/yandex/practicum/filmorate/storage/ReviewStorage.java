@@ -1,14 +1,10 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 import ru.yandex.practicum.filmorate.model.Review;
-
 import java.util.List;
 
-public interface ReviewRepository extends JpaRepository<Review, Long> {
-    List<Review> findByFilmId(Long filmId);
+public interface ReviewStorage {
+    /*List<Review> findByFilmId(Long filmId);
 
     @Query(value = "SELECT COUNT(*) FROM review_likes WHERE review_id = :reviewId AND is_like = true", nativeQuery = true)
     int countLikes(Long reviewId);
@@ -40,5 +36,34 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Modifying
     @Query(value = "DELETE FROM review_likes WHERE review_id = :reviewId", nativeQuery = true)
+    void deleteAllLikesByReviewId(Long reviewId);*/
+    Review get(Long reviewId);
+
+    List<Review> getByFilmId(Long filmId);
+
+    List<Review> getAll();
+
+    Review add(Review review);
+
+    Review update(Review review);
+
+    boolean deleteById(Long reviewId);
+
+    int countLikes(Long reviewId);
+
+    int countDislikes(Long reviewId);
+
+    boolean hasLike(Long reviewId, Long userId);
+
+    boolean hasDislike(Long reviewId, Long userId);
+
+    void addLike(Long reviewId, Long userId);
+
+    void addDislike(Long reviewId, Long userId);
+
+    void deleteLike(Long reviewId, Long userId);
+
+    void deleteDislike(Long reviewId, Long userId);
+
     void deleteAllLikesByReviewId(Long reviewId);
 }

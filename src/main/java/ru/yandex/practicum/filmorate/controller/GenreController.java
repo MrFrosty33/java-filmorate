@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.dto.GenreDto;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.GenreService;
 
 import java.util.Collection;
@@ -16,22 +16,22 @@ public class GenreController {
     private final GenreService genreService;
 
     @GetMapping("/{id}")
-    public GenreDto get(@PathVariable Long id) {
+    public Genre get(@PathVariable Long id) {
         return genreService.get(id);
     }
 
     @GetMapping
-    public Collection<GenreDto> getAll() {
+    public Collection<Genre> getAll() {
         return genreService.getAll();
     }
 
     @PostMapping
-    public GenreDto add(@Valid @RequestBody GenreDto genre) {
+    public Genre add(@Valid @RequestBody Genre genre) {
         return genreService.add(genre);
     }
 
     @PutMapping
-    public GenreDto update(@Valid @RequestBody GenreDto genre) {
+    public Genre update(@Valid @RequestBody Genre genre) {
         return genreService.update(genre);
     }
 

@@ -76,7 +76,7 @@ public class BaseRepository<T> {
                 log.info("Ошибка при получении ID из таблицы {}", tableName);
                 throw new InternalServerException("Внутренняя ошибка сервера. " +
                         "Можно получить ID только у следующих таблиц: " +
-                        "user, film, genre, rating, friendship_status");
+                        "user, film, genre, rating, friendship_status, reviews");
             }
         }
 

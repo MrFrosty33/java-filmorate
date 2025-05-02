@@ -5,7 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
-import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
+import ru.yandex.practicum.filmorate.model.RatingMpa;
 import ru.yandex.practicum.filmorate.storage.RatingMpaStorage;
 
 import java.util.Collection;
@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Slf4j
 @Repository
-public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements RatingMpaStorage {
+public class RatingMpaRepository extends BaseRepository<RatingMpa> implements RatingMpaStorage {
     private static final String GET_ONE = """
             SELECT * FROM rating WHERE id = ?
             """;
@@ -45,36 +45,36 @@ public class RatingMpaRepository extends BaseRepository<RatingMpaDto> implements
             """;
 
 
-    public RatingMpaRepository(JdbcTemplate jdbc, RowMapper<RatingMpaDto> mapper) {
+    public RatingMpaRepository(JdbcTemplate jdbc, RowMapper<RatingMpa> mapper) {
         super(jdbc, mapper);
     }
 
     @Override
-    public RatingMpaDto get(Long id) {
+    public RatingMpa get(Long id) {
         return findOne(GET_ONE, id);
     }
 
     @Override
-    public Collection<RatingMpaDto> getAll() {
+    public Collection<RatingMpa> getAll() {
         return findMany(GET_ALL);
     }
 
     @Override
-    public RatingMpaDto add(RatingMpaDto rating) {
+    public RatingMpa add(RatingMpa rating) {
         rating.setId(nextIdByTable("genre"));
 
 
         insert(INSERT_RATING,
                 rating.getId(),
-                rating.getName().getDbName());
+                rating.getName());
 
         return get(rating.getId());
     }
 
     @Override
-    public RatingMpaDto update(RatingMpaDto rating) {
+    public RatingMpa update(RatingMpa rating) {
         update(UPDATE_RATING,
-                rating.getName().getDbName(),
+                rating.getName(),
                 rating.getId());
         return get(rating.getId());
     }

@@ -9,8 +9,6 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.RatingMpa;
-import ru.yandex.practicum.filmorate.model.dto.GenreDto;
-import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -50,7 +48,7 @@ public class FilmRowMapper implements RowMapper<Film> {
         // Перешёл на LinkedHasSet дабы сохранять порядок
     }
 
-    private Set<GenreDto> getGenres(long id) {
+    private Set<Genre> getGenres(long id) {
         String stm = "SELECT g.id AS id, g.name AS name " +
                 "FROM film f " +
                 "INNER JOIN film_genre fg ON fg.film_id = f.id " +
@@ -58,15 +56,15 @@ public class FilmRowMapper implements RowMapper<Film> {
                 "WHERE fg.film_id = ? ORDER BY g.id ASC";
 
         return new LinkedHashSet<>(jdbc.query(stm,
-                (rs, rowNum) -> GenreDto.builder()
+                (rs, rowNum) -> Genre.builder()
                         .id(rs.getLong("id"))
-                        .name(Genre.valueOf(rs.getString("name")))
+                        .name(rs.getString("name"))
                         .build(),
                 id
         ));
     }
 
-    private RatingMpaDto getRating(long id) {
+    private RatingMpa getRating(long id) {
         String stm = "SELECT r.id AS id, r.name AS name " +
                 "FROM film f " +
                 "INNER JOIN film_rating fr ON f.id = fr.film_id INNER JOIN rating r ON r.id = fr.rating_id " +
@@ -74,9 +72,9 @@ public class FilmRowMapper implements RowMapper<Film> {
 
         try {
             return jdbc.queryForObject(stm,
-                    (rs, rowNum) -> RatingMpaDto.builder()
+                    (rs, rowNum) -> RatingMpa.builder()
                             .id(rs.getLong("id"))
-                            .name(RatingMpa.fromDbName(rs.getString("name")))
+                            .name(rs.getString("name"))
                             .build(),
                     id
             );
