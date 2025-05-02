@@ -61,6 +61,7 @@ public class BaseRepository<T> {
         String stm = "SELECT MAX(id) FROM ";
 
         // чтобы работало лишь с таблицами, откуда возможно и может потребоваться получить ID
+        // не забывать добавлять новые таблицы сюда!
         switch (tableName) {
             case "user" -> {
                 tableName = "\"user\"";
@@ -68,14 +69,14 @@ public class BaseRepository<T> {
             case "friend" -> {
                 tableName = "\"friend\"";
             }
-            case "film", "genre", "rating", "friendship_status" -> {
+            case "film", "genre", "rating", "friendship_status", "director" -> {
                 // игнорируем
             }
             default -> {
                 log.info("Ошибка при получении ID из таблицы {}", tableName);
                 throw new InternalServerException("Внутренняя ошибка сервера. " +
                         "Можно получить ID только у следующих таблиц: " +
-                        "user, film, genre, rating, friendship_status");
+                        "user, film, genre, rating, friendship_status, reviews");
             }
         }
 

@@ -1,17 +1,17 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import ru.yandex.practicum.filmorate.model.dto.GenreDto;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.Collection;
 
 public interface GenreStorage {
-    GenreDto get(Long id);
+    Genre get(Long id);
 
-    Collection<GenreDto> getAll();
+    Collection<Genre> getAll();
 
-    GenreDto add(GenreDto genre);
+    Genre add(Genre genre);
 
-    GenreDto update(GenreDto genre);
+    Genre update(Genre genre);
 
     boolean delete(Long id);
 

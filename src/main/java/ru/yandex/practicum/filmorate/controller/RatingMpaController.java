@@ -5,7 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
+import ru.yandex.practicum.filmorate.model.RatingMpa;
 import ru.yandex.practicum.filmorate.service.RatingMpaService;
 
 import java.util.Collection;
@@ -17,22 +17,22 @@ public class RatingMpaController {
     private final RatingMpaService ratingService;
 
     @GetMapping("/{id}")
-    public RatingMpaDto get(@PathVariable Long id) {
+    public RatingMpa get(@PathVariable Long id) {
         return ratingService.get(id);
     }
 
     @GetMapping
-    public Collection<RatingMpaDto> getAll() {
+    public Collection<RatingMpa> getAll() {
         return ratingService.getAll();
     }
 
     @PostMapping
-    public RatingMpaDto add(@Valid @RequestBody RatingMpaDto rating) {
+    public RatingMpa add(@Valid @RequestBody RatingMpa rating) {
         return ratingService.add(rating);
     }
 
     @PutMapping
-    public RatingMpaDto update(@Valid @RequestBody RatingMpaDto rating) {
+    public RatingMpa update(@Valid @RequestBody RatingMpa rating) {
         return ratingService.update(rating);
     }
 
