@@ -1,17 +1,17 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
+import ru.yandex.practicum.filmorate.model.RatingMpa;
 
 import java.util.Collection;
 
 public interface RatingMpaStorage {
-    RatingMpaDto get(Long id);
+    RatingMpa get(Long id);
 
-    Collection<RatingMpaDto> getAll();
+    Collection<RatingMpa> getAll();
 
-    RatingMpaDto add(RatingMpaDto rating);
+    RatingMpa add(RatingMpa rating);
 
-    RatingMpaDto update(RatingMpaDto rating);
+    RatingMpa update(RatingMpa rating);
 
     boolean delete(Long id);
 

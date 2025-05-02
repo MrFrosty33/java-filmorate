@@ -6,8 +6,6 @@ import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.annotation.MinLocalDate;
-import ru.yandex.practicum.filmorate.model.dto.GenreDto;
-import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -34,9 +32,9 @@ public class Film {
     private long duration;
 
     private Set<Long> likes;
-    private Set<GenreDto> genres;
+    private Set<Genre> genres;
     @JsonProperty("mpa")
-    private RatingMpaDto ratingMpa;
+    private RatingMpa ratingMpa;
     private Set<Director> directors;
 
     public int getRate() {

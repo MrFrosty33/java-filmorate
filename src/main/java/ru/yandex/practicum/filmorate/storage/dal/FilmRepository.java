@@ -10,8 +10,8 @@ import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.dto.GenreDto;
-import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.RatingMpa;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.time.Year;
@@ -275,7 +275,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             Set<Long> genreIds = new HashSet<>(jdbc.queryForList(GET_ALL_GENRE_ID, Long.class));
             List<Object[]> batchArgs = new ArrayList<>();
 
-            for (GenreDto genre : film.getGenres()) {
+            for (Genre genre : film.getGenres()) {
                 if (genreIds.contains(genre.getId())) {
                     batchArgs.add(new Object[]{film.getId(), genre.getId()});
                 } else {
@@ -332,9 +332,9 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         // Допустим, переданный нам фильм полностью корректен
         // Если одно из полей isEmpty \ isBlank, значит таково пожелание обновления
         Set<Long> likes = film.getLikes();
-        Set<GenreDto> genres = film.getGenres();
+        Set<Genre> genres = film.getGenres();
         Set<Director> directors = film.getDirectors();
-        RatingMpaDto rating = film.getRatingMpa();
+        RatingMpa rating = film.getRatingMpa();
 
         // Сам фильм можно сразу обновить
         update(UPDATE_FILM,
@@ -361,7 +361,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         if (!genres.isEmpty()) {
             List<Object[]> batchArgs = new ArrayList<>();
 
-            for (GenreDto genre : genres) {
+            for (Genre genre : genres) {
                 batchArgs.add(new Object[]{film.getId(), genre.getId()});
             }
 

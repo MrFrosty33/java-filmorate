@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.dto.GenreDto;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.dal.GenreRepository;
 
 import java.util.Collection;
@@ -17,7 +17,7 @@ import java.util.Optional;
 public class GenreService {
     private final GenreRepository genreRepository;
 
-    public GenreDto get(Long id) {
+    public Genre get(Long id) {
         validateGenreExists(Optional.of(id),
                 new NotFoundException("Не существует жанра с id: " + id),
                 "Попытка получить несуществующий жанр с id: " + id);
@@ -26,18 +26,18 @@ public class GenreService {
         return genreRepository.get(id);
     }
 
-    public Collection<GenreDto> getAll() {
+    public Collection<Genre> getAll() {
         log.info("Получен список всех жанров");
         return genreRepository.getAll();
     }
 
-    public GenreDto add(GenreDto genre) {
+    public Genre add(Genre genre) {
         genre = genreRepository.add(genre);
         log.info("Был добавлен жанр с id: {}", genre.getId());
         return genre;
     }
 
-    public GenreDto update(GenreDto genre) {
+    public Genre update(Genre genre) {
         Long id = genre.getId();
 
         validateGenreExists(Optional.of(id),
@@ -67,7 +67,7 @@ public class GenreService {
                                      RuntimeException e, String logMessage) {
         try {
             if (id.isPresent()) {
-                Optional<GenreDto> result = Optional.ofNullable(genreRepository.get(id.get()));
+                Optional<Genre> result = Optional.ofNullable(genreRepository.get(id.get()));
                 if (result.isEmpty()) {
                     log.info(logMessage);
                     throw e;
