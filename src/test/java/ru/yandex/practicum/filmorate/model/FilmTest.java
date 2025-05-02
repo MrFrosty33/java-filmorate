@@ -20,7 +20,7 @@ public class FilmTest {
             .duration(148)
             .likes(new HashSet<>())
             .genres(new HashSet<>())
-            .ratingMpa(RatingMpa.builder().name(RatingMpa.R).id(4L).build())
+            .ratingMpa(RatingMpa.builder().name("R").id(4L).build())
             .build();
 
     @BeforeEach
