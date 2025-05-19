@@ -4,15 +4,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.BadRequestParamException;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 
+import java.time.Year;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,6 +27,9 @@ import java.util.Set;
 public class FilmService {
     private final FilmRepository filmRepository;
     private final UserService userService;
+    private final GenreService genreService;
+    private final DirectorService directorService;
+    private final FeedStorage feedRepository;
 
     public Film get(Long id) {
         validateFilmExists(Optional.of(id),
@@ -32,28 +40,42 @@ public class FilmService {
         return filmRepository.get(id);
     }
 
+    // в методах getAll & deleteAll была проверка на пустую таблицу и в таком случае выкидывалась NotFoundException
+    // вырезано, т.к. не проходит тесты
     public Collection<Film> getAll() {
-        validateFilmExists(Optional.empty(),
-                new NotFoundException("Таблица film пуста"),
-                "Попытка получить данные из таблицы film, которая пуста");
-
         log.info("Получен список всех фильмов");
         return filmRepository.getAll();
     }
 
-    public Collection<Film> getPopular(int limit) {
+    public Collection<Film> getPopular(Long limit, Long genreId, Year year) {
         validateFilmExists(Optional.empty(),
                 new NotFoundException("Таблица film пуста"),
                 "Попытка получить данные из таблицы film, которая пуста");
 
-        if (limit <= 0) {
-            log.info("Попытка получить список популярных фильмов c limit = {}", limit);
-            throw new BadRequestParamException("limit не может быть меньше или равен 0");
+        if (genreId != null) {
+            genreService.get(genreId);
         }
 
-        Collection<Film> result = filmRepository.getPopular(limit);
-        log.info("Получен список из {} наиболее популярных фильмов", result.size());
+        Collection<Film> result = filmRepository.getPopular(limit, genreId, year);
+        if (limit == null) log.info("Получен список наиболее популярных фильмов");
+        else log.info("Получен список из {} наиболее популярных фильмов", limit);
         return result;
+    }
+
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        userService.get(userId);
+        userService.get(friendId);
+        return filmRepository.getCommonFilms(userId, friendId);
+    }
+
+    public Collection<Film> getByDirector(Long directorId, String sortBy) {
+        Director director = directorService.get(directorId);
+        log.info("Был получен список фильмов у режиссёра с id: {}", directorId);
+        return filmRepository.getByDirector(directorId, sortBy);
+    }
+
+    public Collection<Film> search(String query, String by) {
+        return filmRepository.search(query, by);
     }
 
     public Film add(Film film) {
@@ -63,6 +85,10 @@ public class FilmService {
 
         if (film.getGenres() == null) {
             film.setGenres(new HashSet<>());
+        }
+
+        if (film.getDirectors() == null) {
+            film.setDirectors(new HashSet<>());
         }
 
         if (!film.getLikes().isEmpty()) {
@@ -81,6 +107,10 @@ public class FilmService {
         Set<Long> likes = filmRepository.addLike(filmId, userId);
 
         log.info("Фильму с id: {} был поставлен лайк от пользователя с id: {}", filmId, userId);
+
+        feedRepository.addEventToFeed(userId, EventType.LIKE, Operation.ADD, filmId);
+        log.info("Событие добавлено в ленту: пользователь с id: {} лайкнул фильм с id: {}", userId, filmId);
+
         return likes;
     }
 
@@ -99,9 +129,13 @@ public class FilmService {
             film.setGenres(new HashSet<>());
         }
 
+        if (film.getDirectors() == null) {
+            film.setDirectors(new HashSet<>());
+        }
+
+        film = filmRepository.update(film);
         log.info("Был обновлён фильм с id: {}", id);
-        filmRepository.update(film);
-        return filmRepository.get(id);
+        return film;
     }
 
     // В репозитории оставил один метод update(Film film)
@@ -121,10 +155,6 @@ public class FilmService {
     }
 
     public void deleteAll() {
-        validateFilmExists(Optional.empty(),
-                new NotFoundException("Таблица film пуста"),
-                "Попытка очистить таблицу film, которая и так пуста");
-
         filmRepository.deleteAll();
         log.info("Таблица film была очищена");
     }
@@ -134,9 +164,12 @@ public class FilmService {
         User user = userService.get(userId);
 
         if (film.getLikes().contains(userId)) {
-            film.getLikes().remove(userId);
+            filmRepository.deleteLike(filmId, userId);
             log.info("У фильма с id: {} был удалён лайк от пользователя с id: {}",
                     filmId, userId);
+
+            feedRepository.addEventToFeed(userId, EventType.LIKE, Operation.REMOVE, filmId);
+            log.info("Событие добавлено в ленту: пользователь с id: {} удалил лайк у фильма с id: {}", userId, filmId);
         } else {
             log.info("Попытка удалить у фильма с id: {} несуществующий лайк от пользователя с id: {}",
                     filmId, userId);
@@ -153,13 +186,14 @@ public class FilmService {
                     log.info(logMessage);
                     throw e;
                 }
-            } else {
-                Optional<Collection<Film>> result = Optional.ofNullable(filmRepository.getAll());
-                if (result.isEmpty()) {
-                    log.info(logMessage);
-                    throw e;
-                }
             }
+//            else {
+//                Optional<Collection<Film>> result = Optional.ofNullable(filmRepository.getAll());
+//                if (result.isPresent() && result.get().isEmpty()) {
+//                    log.info(logMessage);
+//                    throw e;
+//                }
+//            }
         } catch (EmptyResultDataAccessException ex) {
             log.info(logMessage);
             throw e;

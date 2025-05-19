@@ -20,12 +20,17 @@ public class MapperConfig {
     }
 
     @Bean
-    public GenreDtoRowMapper genreDtoRowMapper(JdbcTemplate jdbc) {
-        return new GenreDtoRowMapper(jdbc);
+    public GenreRowMapper genreDtoRowMapper(JdbcTemplate jdbc) {
+        return new GenreRowMapper(jdbc);
     }
 
     @Bean
-    public RatingMpaDtoRowMapper ratingMpaDtoRowMapper(JdbcTemplate jdbc) {
-        return new RatingMpaDtoRowMapper(jdbc);
+    public RatingMpaRowMapper ratingMpaDtoRowMapper(JdbcTemplate jdbc) {
+        return new RatingMpaRowMapper(jdbc);
+    }
+
+    @Bean
+    public DirectorRowMapper directorRowMapper() {
+        return new DirectorRowMapper();
     }
 }

@@ -6,19 +6,32 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConflictException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FriendshipStatus;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserEvent;
+import ru.yandex.practicum.filmorate.storage.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.storage.dal.UserRepository;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final FilmRepository filmRepository;
+    private final FeedStorage feedRepository;
 
     public User get(Long id) {
         validateUserExists(Optional.of(id),
@@ -30,10 +43,6 @@ public class UserService {
     }
 
     public Collection<User> getAll() {
-        validateUserExists(Optional.empty(),
-                new NotFoundException("Таблица user пуста"),
-                "Попытка получить данные из таблицы user, которая пуста");
-
         log.info("Получен список всех пользователей");
         return userRepository.getAll();
     }
@@ -50,6 +59,60 @@ public class UserService {
         log.info("Получен список совместных друзей между пользователем с id: {} и другим пользователем с id: {}",
                 id, otherId);
         return userRepository.getCommonFriends(id, otherId);
+    }
+
+    public List<Film> getRecommendations(Long id) {
+        validateUserExists(Optional.of(id),
+                new NotFoundException("Не существует пользователь с id: " + id),
+                "Попытка получить несуществующего пользователя с id: " + id);
+
+        Map<Long, Set<Long>> similarUserLikes = userRepository.getSimilarUserLikes(id);
+        Set<Long> userLikes = similarUserLikes.get(id);
+        if (userLikes == null) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> mostSimilarUsers = getMostSimilarUsers(id, similarUserLikes);
+        Set<Long> recommendations = new HashSet<>();
+        for (Long userId : mostSimilarUsers) {
+            Set<Long> otherUserLikes = similarUserLikes.get(userId);
+            for (Long otherUserLike : otherUserLikes) {
+                if (!userLikes.contains(otherUserLike)) {
+                    recommendations.add(otherUserLike);
+                }
+            }
+        }
+        log.info("Получен список рекомендаций с id: {}", id);
+        return filmRepository.getByListIds(recommendations);
+    }
+
+    public List<UserEvent> getFeed(Long id) {
+        validateUserExists(Optional.of(id), new NotFoundException("Не существует пользователь с id: " + id),
+                "Попытка удалить несуществующего пользователя с id: " + id);
+
+        log.info("Получена лента событий пользователя с id: {}", id);
+        return feedRepository.getFeed(id);
+    }
+
+
+    private Set<Long> getMostSimilarUsers(Long userId, Map<Long, Set<Long>> userLikes) {
+        int maxIntersectionSize = 0;
+
+        Set<Long> mostSimilarUsers = new HashSet<>();
+        for (Map.Entry<Long, Set<Long>> entry : userLikes.entrySet()) {
+            if (entry.getKey().equals(userId)) continue;
+            Set<Long> otherUserLikes = entry.getValue();
+            Set<Long> intersection = new HashSet<>(userLikes.get(userId));
+            intersection.retainAll(otherUserLikes);
+            if (intersection.size() > maxIntersectionSize) {
+                maxIntersectionSize = intersection.size();
+                mostSimilarUsers.clear();
+                mostSimilarUsers.add(entry.getKey());
+            } else if (intersection.size() == maxIntersectionSize) {
+                mostSimilarUsers.add(entry.getKey());
+            }
+        }
+        return mostSimilarUsers;
     }
 
     public FriendshipStatus getFriendshipStatus(Long id, Long otherId) {
@@ -88,9 +151,9 @@ public class UserService {
             throw new ConflictException("Новый пользователь не может иметь друзей");
         }
 
-        userRepository.add(user);
+        user = userRepository.add(user);
         log.info("Был добавлен пользователь с id: {}", user.getId());
-        return userRepository.get(user.getId());
+        return user;
     }
 
     // Стоит возвращать целиком пользователя, или же только статус дружбы, полученный в ходе выполнения метода?
@@ -126,12 +189,16 @@ public class UserService {
             userRepository.updateFriendshipStatus(friendId, id, status);
             log.info("В таблице friend была добавлена запись с id: {} и id: {}, со статусом: {}", id, friendId, status);
             userRepository.addFriend(id, friendId, status);
+
         } catch (EmptyResultDataAccessException e) {
             // если же нет таких записей, то добавляем дружбу пользователя А с Б со статусом UNCONFIRMED
             status = FriendshipStatus.UNCONFIRMED;
             log.info("В таблице friend была добавлена запись с id: {} и id: {}, со статусом: {}", id, friendId, status);
             userRepository.addFriend(id, friendId, status);
         }
+
+        feedRepository.addEventToFeed(id, EventType.FRIEND, Operation.ADD, friendId);
+        log.info("Событие добавлено в ленту: пользовател с id: {} добавил друга с id: {}", id, friendId);
 
         return userRepository.get(id);
     }
@@ -147,9 +214,9 @@ public class UserService {
             user.setFriendStatusMap(new HashMap<>());
         }
 
-        userRepository.update(user);
+        user = userRepository.update(user);
         log.info("Был обновлён пользователь с id: {}", id);
-        return userRepository.get(id);
+        return user;
     }
 
     public User update(Long id, User user) {
@@ -183,13 +250,13 @@ public class UserService {
 
         userRepository.deleteFriend(id, friendId);
         log.info("У пользователя с id: {} был удалён друг с id: {}", id, friendId);
+
+        feedRepository.addEventToFeed(id, EventType.FRIEND, Operation.REMOVE, friendId);
+        log.info("Событие добавлено в ленту: пользовател с id: {} удалил друга с id: {}", id, friendId);
+
     }
 
     public void deleteAll() {
-        validateUserExists(Optional.empty(),
-                new NotFoundException("Таблица user пуста"),
-                "Попытка очистить таблицу user, которая и так пуста");
-
         userRepository.deleteAll();
         log.info("Таблица user была очищена");
     }
@@ -199,12 +266,6 @@ public class UserService {
         try {
             if (id.isPresent()) {
                 Optional<User> result = Optional.ofNullable(userRepository.get(id.get()));
-                if (result.isEmpty()) {
-                    log.info(logMessage);
-                    throw e;
-                }
-            } else {
-                Optional<Collection<User>> result = Optional.ofNullable(userRepository.getAll());
                 if (result.isEmpty()) {
                     log.info(logMessage);
                     throw e;

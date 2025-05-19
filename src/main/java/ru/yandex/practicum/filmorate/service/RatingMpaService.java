@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.dto.RatingMpaDto;
+import ru.yandex.practicum.filmorate.model.RatingMpa;
 import ru.yandex.practicum.filmorate.storage.dal.RatingMpaRepository;
 
 import java.util.Collection;
@@ -17,7 +17,7 @@ import java.util.Optional;
 public class RatingMpaService {
     private final RatingMpaRepository ratingMpaRepository;
 
-    public RatingMpaDto get(Long id) {
+    public RatingMpa get(Long id) {
         validateRatingExists(Optional.of(id),
                 new NotFoundException("Не существует рейтинга с id: " + id),
                 "Попытка получить несуществующий рейтинг с id: " + id);
@@ -26,31 +26,27 @@ public class RatingMpaService {
         return ratingMpaRepository.get(id);
     }
 
-    public Collection<RatingMpaDto> getAll() {
-        validateRatingExists(Optional.empty(),
-                new NotFoundException("Таблица rating пуста"),
-                "Попытка получить данные из таблицы rating, которая пуста");
-
+    public Collection<RatingMpa> getAll() {
         log.info("Получен список всех рейтингов");
         return ratingMpaRepository.getAll();
     }
 
-    public RatingMpaDto add(RatingMpaDto rating) {
+    public RatingMpa add(RatingMpa rating) {
         rating = ratingMpaRepository.add(rating);
         log.info("Был добавлен рейтинг с id: {}", rating.getId());
         return rating;
     }
 
-    public RatingMpaDto update(RatingMpaDto rating) {
+    public RatingMpa update(RatingMpa rating) {
         Long id = rating.getId();
 
         validateRatingExists(Optional.of(id),
                 new NotFoundException("Рейтинг с id: " + id + " не существует"),
                 "Попытка обновить несуществующий рейтинг с id: " + id);
 
+        rating = ratingMpaRepository.update(rating);
         log.info("Был обновлён рейтинг с id: {}", id);
-        ratingMpaRepository.update(rating);
-        return ratingMpaRepository.get(id);
+        return rating;
     }
 
     public void delete(Long id) {
@@ -63,10 +59,6 @@ public class RatingMpaService {
     }
 
     public void deleteAll() {
-        validateRatingExists(Optional.empty(),
-                new NotFoundException("Таблица rating пуста"),
-                "Попытка очистить таблицу rating, которая и так пуста");
-
         ratingMpaRepository.deleteAll();
         log.info("Таблица rating была очищена");
     }
@@ -75,13 +67,7 @@ public class RatingMpaService {
                                       RuntimeException e, String logMessage) {
         try {
             if (id.isPresent()) {
-                Optional<RatingMpaDto> result = Optional.ofNullable(ratingMpaRepository.get(id.get()));
-                if (result.isEmpty()) {
-                    log.info(logMessage);
-                    throw e;
-                }
-            } else {
-                Optional<Collection<RatingMpaDto>> result = Optional.ofNullable(ratingMpaRepository.getAll());
+                Optional<RatingMpa> result = Optional.ofNullable(ratingMpaRepository.get(id.get()));
                 if (result.isEmpty()) {
                     log.info(logMessage);
                     throw e;
