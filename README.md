@@ -1,6 +1,6 @@
 # Filmorate — Movie Rating Service
 
-Filmorate is a backend service built with Java and Spring Boot that manages movies, users, and their ratings. This project demonstrates solid understanding of backend development with Java, including REST API design, layered architecture, database interaction (H2 and PostgreSQL), data validation, using Spring Boot. It also reflects experience with version control and collaborative development, as part of the functionality was implemented in a team setting.
+Filmorate is a backend service built with Java and Spring Boot that manages movies, users, and their ratings. This project demonstrates solid understanding of backend development with Java, including REST API design, layered architecture, database interaction (H2 and PostgreSQL), data validation, using Spring Boot. It also reflects experience with version control and collaborative development, as part of the functionality was implemented in a team setting. Developed as part of the Yandex Practicum - Java developer program.
 
 ---
 
